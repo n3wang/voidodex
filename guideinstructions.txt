@@ -1,0 +1,53 @@
+Void Codex – Development Brief
+
+Void Codex is a 2D space-strategy roguelike inspired by FTL, with a strong focus on crew training, sector biomes, and a codex-reading mechanic required before each hyperspace jump. The game is built with LibGDX, using Scene2D for UI. The core loop revolves around managing a ship, training crew competencies, exploring procedurally generated biomes, reading lore pages to unlock navigation data, and surviving encounters.
+
+Core Gameplay
+
+Player commands a single starship traveling through sectors.
+
+Each sector belongs to a unique biome (ion storms, nebula jungles, crystal clusters, derelict graveyards, etc.) that modifies events and hazards.
+
+Combat is paused real-time: manage power, weapons, systems, and crew placement.
+
+Crew members have skill progressions (engineering, medical, navigation, combat, research).
+
+Before each hyperspace jump, the player must read 1–2 pages of the “Void Codex”—lore entries that also reveal mechanical info about the next biome or encounter.
+
+Key Systems
+
+Ship Grid System: Rooms laid out on a grid, each room mapped to a subsystem.
+
+Crew AI: Crew navigates between rooms, performs tasks, and gains XP.
+
+Codex System: Loads narrative pages that contain lore, hints, and gameplay modifiers.
+
+Biome Generator: Creates sector types with modifiers to events, hazards, and enemy loadouts.
+
+Combat System: Power distribution, subsystem damage, fires, breaches, oxygen levels.
+
+Event System: Branching events influenced by crew skills and codex knowledge.
+
+Progression: Unlockable ships, crew backgrounds, biome-specific advantages.
+
+Technical
+
+Framework: LibGDX 1.14, Java 17, Scene2D + FreeType.
+
+Rendering: 2D sprites, Scene2D UI for panels and codex pages.
+
+Data: JSON/TOML for events, biomes, ship layouts; optional Ink scripts for codex text.
+
+Architecture: Screen-based (MainMenu, ShipScreen, CodexScreen, CombatScreen).
+
+Style: Minimalist pixel-style UI, readable typography, clean layout.
+
+Design Goals
+
+Tactical depth without overwhelming complexity.
+
+Atmosphere of mystery and knowledge-driven exploration.
+
+High replayability via biomes, events, and random maps.
+
+Reading pages create a rhythm of tension, reflection, and preparation.
