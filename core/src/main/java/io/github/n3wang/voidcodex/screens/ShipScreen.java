@@ -88,7 +88,6 @@ public class ShipScreen extends GameScreen {
         
         // Left: Action buttons
         Table buttonTable = new Table();
-        Table buttonTable = new Table();
         
         TextButton codexButton = new TextButton("Read Codex", game.getSkin());
         codexButton.addListener(new ChangeListener() {
@@ -295,12 +294,13 @@ public class ShipScreen extends GameScreen {
     
     private void startCombat() {
         // Create a simple enemy ship
+        Ship playerShip = game.getGameState().getCurrentShip();
         Ship enemyShip = Ship.createStarterShip();
         enemyShip.setCurrentHull(20);
         enemyShip.setAvailablePower(6);
         
         // Start combat
-        game.getGameState().getCombatState().startCombat(enemyShip);
+        game.getGameState().getCombatState().startCombat(playerShip, enemyShip);
         game.setScreen(new CombatScreen(game));
     }
 

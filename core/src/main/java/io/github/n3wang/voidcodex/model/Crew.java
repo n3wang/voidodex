@@ -17,6 +17,11 @@ public class Crew {
     private boolean isMoving;
     private int targetRoomX;
     private int targetRoomY;
+    private int quarterPosition; // 0-3: top-left, top-right, bottom-left, bottom-right
+    private float movementSpeed; // Tiles per second
+    private float movementProgress; // 0.0 to 1.0, progress to next room
+    private int nextRoomX; // Next room in path
+    private int nextRoomY; // Next room in path
 
     public Crew(String name, CrewRole role) {
         this.name = name;
@@ -27,6 +32,8 @@ public class Crew {
         this.currentRoomX = 0;
         this.currentRoomY = 0;
         this.isMoving = false;
+        this.movementSpeed = 2.0f; // 2 tiles per second = 0.5 seconds per tile
+        this.movementProgress = 0.0f;
         
         // Initialize skills with base XP
         for (Skill skill : Skill.values()) {
@@ -70,6 +77,38 @@ public class Crew {
     public void setTargetRoomX(int x) { this.targetRoomX = x; }
     public int getTargetRoomY() { return targetRoomY; }
     public void setTargetRoomY(int y) { this.targetRoomY = y; }
+    public int getQuarterPosition() { return quarterPosition; }
+    public void setQuarterPosition(int quarter) { this.quarterPosition = Math.max(0, Math.min(3, quarter)); }
+    public float getMovementSpeed() { return movementSpeed; }
+    public void setMovementSpeed(float speed) { this.movementSpeed = Math.max(0.1f, speed); }
+    public float getMovementProgress() { return movementProgress; }
+    public void setMovementProgress(float progress) { this.movementProgress = Math.max(0f, Math.min(1f, progress)); }
+    public int getNextRoomX() { return nextRoomX; }
+    public void setNextRoomX(int x) { this.nextRoomX = x; }
+    public int getNextRoomY() { return nextRoomY; }
+    public void setNextRoomY(int y) { this.nextRoomY = y; }
     public Map<Skill, Integer> getSkills() { return skills; }
+    
+    /**
+     * Update movement progress. Returns true if crew reached destination.
+     */
+    public boolean updateMovement(float deltaTime) {
+        if (!isMoving) return false;
+        
+        movementProgress += movementSpeed * deltaTime;
+        if (movementProgress >= 1.0f) {
+            // Reached next room
+            currentRoomX = nextRoomX;
+            currentRoomY = nextRoomY;
+            movementProgress = 0.0f;
+            
+            // Check if reached final destination
+            if (currentRoomX == targetRoomX && currentRoomY == targetRoomY) {
+                isMoving = false;
+                return true; // Reached destination
+            }
+        }
+        return false; // Still moving
+    }
 }
 

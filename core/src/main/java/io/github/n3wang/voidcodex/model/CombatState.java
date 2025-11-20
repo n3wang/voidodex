@@ -23,13 +23,16 @@ public class CombatState {
         this.playerTurn = true;
     }
     
-    public void startCombat(Ship enemyShip) {
+    public void startCombat(Ship playerShip, Ship enemyShip) {
         this.enemyShip = enemyShip;
         this.inCombat = true;
         this.mode = CombatMode.WEAPONS;
         this.playerTurn = true;
         // Initialize shields based on shield room power
-        // This will be set by the combat screen
+        this.maxPlayerShields = playerShip.getMaxShields();
+        this.playerShields = playerShip.getShields();
+        this.maxEnemyShields = enemyShip.getMaxShields();
+        this.enemyShields = enemyShip.getShields();
     }
     
     public void endCombat() {

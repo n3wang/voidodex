@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 import io.github.n3wang.voidcodex.VoidCodexGame;
+import io.github.n3wang.voidcodex.screens.ShipScreenNew;
 import io.github.n3wang.voidcodex.model.Ship;
 import io.github.n3wang.voidcodex.model.Sector;
 import io.github.n3wang.voidcodex.model.Biome;
@@ -62,7 +63,7 @@ public class MainMenuScreen extends GameScreen {
         game.getGameState().setCurrentSector(firstSector);
         
         // Go to ship screen
-        game.setScreen(new ShipScreen(game));
+        game.setScreen(new ShipScreenNew(game));
     }
 }
 

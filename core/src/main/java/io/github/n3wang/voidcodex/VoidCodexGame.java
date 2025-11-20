@@ -10,8 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import io.github.n3wang.voidcodex.screens.MainMenuScreen;
-import io.github.n3wang.voidcodex.screens.ShipScreen;
+import io.github.n3wang.voidcodex.screens.ScenarioSelectionScreen;
 
 /**
  * Main game class that manages screens and global resources.
@@ -28,8 +27,8 @@ public class VoidCodexGame extends Game {
         // Create a simple default-round drawable
         createDefaultRoundDrawable();
         
-        // Start with main menu
-        setScreen(new MainMenuScreen(this));
+        // Start with scenario selection (for development)
+        setScreen(new ScenarioSelectionScreen(this));
     }
 
     private Drawable defaultRoundDrawable;

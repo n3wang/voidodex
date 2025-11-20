@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 import io.github.n3wang.voidcodex.VoidCodexGame;
+import io.github.n3wang.voidcodex.screens.ShipScreenNew;
 import io.github.n3wang.voidcodex.model.CodexEntry;
 import io.github.n3wang.voidcodex.util.CodexManager;
 
@@ -120,7 +121,7 @@ public class CodexScreen extends GameScreen {
                     sector.setCodexRead(true);
                 }
                 // Return to ship screen
-                game.setScreen(new ShipScreen(game));
+                game.setScreen(new ShipScreenNew(game));
             }
         });
         mainTable.add(doneButton).fillX();

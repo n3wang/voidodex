@@ -2,6 +2,7 @@ package io.github.n3wang.voidcodex;
 
 import io.github.n3wang.voidcodex.model.Biome;
 import io.github.n3wang.voidcodex.model.CombatState;
+import io.github.n3wang.voidcodex.model.GameTimeState;
 import io.github.n3wang.voidcodex.model.Ship;
 import io.github.n3wang.voidcodex.model.Sector;
 
@@ -17,11 +18,13 @@ public class GameState {
     private int currentSectorIndex;
     private List<Biome> discoveredBiomes;
     private CombatState combatState;
+    private GameTimeState timeState;
 
     public GameState() {
         currentSectorIndex = 0;
         discoveredBiomes = new ArrayList<>();
         combatState = new CombatState();
+        timeState = new GameTimeState();
     }
 
     public Ship getCurrentShip() {
@@ -54,6 +57,10 @@ public class GameState {
 
     public CombatState getCombatState() {
         return combatState;
+    }
+    
+    public GameTimeState getTimeState() {
+        return timeState;
     }
     
     public boolean isInCombat() {

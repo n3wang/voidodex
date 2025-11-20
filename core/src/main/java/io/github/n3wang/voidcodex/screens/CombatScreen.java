@@ -5,6 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import io.github.n3wang.voidcodex.VoidCodexGame;
+import io.github.n3wang.voidcodex.screens.ShipScreenNew;
 import io.github.n3wang.voidcodex.model.*;
 
 /**
@@ -105,7 +106,7 @@ public class CombatScreen extends GameScreen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 game.getGameState().getCombatState().endCombat();
-                game.setScreen(new ShipScreen(game));
+                game.setScreen(new ShipScreenNew(game));
             }
         });
         mainTable.add(backButton).colspan(2);

@@ -1,35 +1,35 @@
 Asset Type,Asset Name,Description,Priority,Status,Notes
-Sprite,Ship Room - Bridge,Visual representation of bridge room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Medbay,Visual representation of medbay room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Shields,Visual representation of shields room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Weapons,Visual representation of weapons room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Engines,Visual representation of engines room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Oxygen,Visual representation of oxygen room,High,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Sensors,Visual representation of sensors room,Medium,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Doors,Visual representation of doors room,Medium,Missing,Box with text placeholder currently used
-Sprite,Ship Room - Empty,Visual representation of empty room,Low,Missing,Box with text placeholder currently used
-Sprite,Crew Member - Captain,Portrait/sprite for captain crew member,High,Missing,Simple character representation needed
-Sprite,Crew Member - Engineer,Portrait/sprite for engineer crew member,High,Missing,Simple character representation needed
-Sprite,Crew Member - Medic,Portrait/sprite for medic crew member,High,Missing,Simple character representation needed
-Sprite,Crew Member - Pilot,Portrait/sprite for pilot crew member,Medium,Missing,Simple character representation needed
-Sprite,Crew Member - Soldier,Portrait/sprite for soldier crew member,Medium,Missing,Simple character representation needed
-Sprite,Crew Member - Scientist,Portrait/sprite for scientist crew member,Medium,Missing,Simple character representation needed
-Sprite,Ship Hull,Visual representation of ship hull/damage,High,Missing,For showing ship condition
-Sprite,Fire Effect,Animation/sprite for room fires,High,Missing,For combat system
-Sprite,Breach Effect,Visual for hull breaches,High,Missing,For combat system
-Sprite,Power Indicator,Icon for power level display,Medium,Missing,UI element
+Sprite,Ship Room - Bridge,Visual representation of bridge room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Medbay,Visual representation of medbay room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Shields,Visual representation of shields room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Weapons,Visual representation of weapons room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Engines,Visual representation of engines room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Oxygen,Visual representation of oxygen room,High,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Sensors,Visual representation of sensors room,Medium,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Doors,Visual representation of doors room,Medium,Generated,Programmatically generated pixel art
+Sprite,Ship Room - Empty,Visual representation of empty room,Low,Generated,Programmatically generated pixel art
+Sprite,Crew Member - Captain,Portrait/sprite for captain crew member,High,Generated,Programmatically generated pixel art (color variations)
+Sprite,Crew Member - Engineer,Portrait/sprite for engineer crew member,High,Generated,Programmatically generated pixel art (color variations)
+Sprite,Crew Member - Medic,Portrait/sprite for medic crew member,High,Generated,Programmatically generated pixel art (color variations)
+Sprite,Crew Member - Pilot,Portrait/sprite for pilot crew member,Medium,Generated,Programmatically generated pixel art (color variations)
+Sprite,Crew Member - Soldier,Portrait/sprite for soldier crew member,Medium,Generated,Programmatically generated pixel art (color variations)
+Sprite,Crew Member - Scientist,Portrait/sprite for scientist crew member,Medium,Generated,Programmatically generated pixel art (color variations)
+Sprite,Ship Hull,Visual representation of ship hull/damage,High,Generated,Programmatically generated pixel art
+Sprite,Fire Effect,Animation/sprite for room fires,High,Generated,Programmatically generated pixel art
+Sprite,Breach Effect,Visual for hull breaches,High,Generated,Programmatically generated pixel art
+Sprite,Power Indicator,Icon for power level display,Medium,Generated,Programmatically generated pixel art (power boxes)
 Sprite,Health Bar,Health bar visual,Medium,Missing,UI element
-Sprite,Biome Icon - Ion Storm,Icon representing ion storm biome,Medium,Missing,For sector display
-Sprite,Biome Icon - Nebula Jungle,Icon representing nebula jungle biome,Medium,Missing,For sector display
-Sprite,Biome Icon - Crystal Cluster,Icon representing crystal cluster biome,Medium,Missing,For sector display
-Sprite,Biome Icon - Derelict Graveyard,Icon representing derelict graveyard biome,Medium,Missing,For sector display
-Sprite,Biome Icon - Void Space,Icon representing void space biome,Low,Missing,For sector display
-Sprite,Biome Icon - Asteroid Field,Icon representing asteroid field biome,Low,Missing,For sector display
-Sprite,Biome Icon - Pirate Territory,Icon representing pirate territory biome,Low,Missing,For sector display
-Sprite,Biome Icon - Research Outpost,Icon representing research outpost biome,Low,Missing,For sector display
-Sprite,Enemy Ship,Visual for enemy ships in combat,High,Missing,For combat screen
-Sprite,Weapon Projectile,Visual for weapon projectiles,High,Missing,For combat system
-Sprite,Shield Effect,Visual for shield activation,Medium,Missing,For combat system
+Sprite,Biome Icon - Ion Storm,Icon representing ion storm biome,Medium,Generated,Programmatically generated pixel art
+Sprite,Biome Icon - Nebula Jungle,Icon representing nebula jungle biome,Medium,Generated,Programmatically generated pixel art
+Sprite,Biome Icon - Crystal Cluster,Icon representing crystal cluster biome,Medium,Generated,Programmatically generated pixel art
+Sprite,Biome Icon - Derelict Graveyard,Icon representing derelict graveyard biome,Medium,Generated,Programmatically generated pixel art
+Sprite,Biome Icon - Void Space,Icon representing void space biome,Low,Generated,Programmatically generated pixel art (default)
+Sprite,Biome Icon - Asteroid Field,Icon representing asteroid field biome,Low,Generated,Programmatically generated pixel art (default)
+Sprite,Biome Icon - Pirate Territory,Icon representing pirate territory biome,Low,Generated,Programmatically generated pixel art (default)
+Sprite,Biome Icon - Research Outpost,Icon representing research outpost biome,Low,Generated,Programmatically generated pixel art (default)
+Sprite,Enemy Ship,Visual for enemy ships in combat,High,Generated,Programmatically generated pixel art
+Sprite,Weapon Projectile,Visual for weapon projectiles,High,Generated,Programmatically generated pixel art
+Sprite,Shield Effect,Visual for shield activation,Medium,Generated,Programmatically generated pixel art
 UI,Codex Page Background,Background texture for codex reading screen,Medium,Missing,Currently using default UI skin
 UI,Button Hover,Button hover state visual,Low,Missing,Currently using default UI skin
 UI,Button Pressed,Button pressed state visual,Low,Missing,Currently using default UI skin
@@ -52,9 +52,9 @@ Animation,Crew Walking,Animation for crew movement between rooms,Medium,Missing,
 Animation,Fire Spread,Animation for fire spreading in rooms,High,Missing,For combat system
 Animation,Shield Recharge,Animation for shield recharging,Medium,Missing,For combat system
 Animation,Weapon Charge,Animation for weapon charging,Medium,Missing,For combat system
-Icon,Skill Icon - Engineering,Icon for engineering skill,Low,Missing,For crew skill display
-Icon,Skill Icon - Medical,Icon for medical skill,Low,Missing,For crew skill display
-Icon,Skill Icon - Navigation,Icon for navigation skill,Low,Missing,For crew skill display
-Icon,Skill Icon - Combat,Icon for combat skill,Low,Missing,For crew skill display
-Icon,Skill Icon - Research,Icon for research skill,Low,Missing,For crew skill display
+Icon,Skill Icon - Engineering,Icon for engineering skill,Low,Generated,Programmatically generated pixel art
+Icon,Skill Icon - Medical,Icon for medical skill,Low,Generated,Programmatically generated pixel art
+Icon,Skill Icon - Navigation,Icon for navigation skill,Low,Generated,Programmatically generated pixel art
+Icon,Skill Icon - Combat,Icon for combat skill,Low,Generated,Programmatically generated pixel art
+Icon,Skill Icon - Research,Icon for research skill,Low,Generated,Programmatically generated pixel art
 

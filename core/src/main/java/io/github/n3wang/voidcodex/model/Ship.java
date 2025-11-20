@@ -14,8 +14,13 @@ public class Ship {
     private int availablePower;
     private List<Room> rooms;
     private List<Crew> crew;
+    private List<Weapon> weapons;
     private int gridWidth;
     private int gridHeight;
+    private int shields;
+    private int maxShields;
+    private int scrap;
+    private int fuel;
 
     public Ship(String name, int maxHull, int maxPower, int gridWidth, int gridHeight) {
         this.name = name;
@@ -27,37 +32,43 @@ public class Ship {
         this.gridHeight = gridHeight;
         this.rooms = new ArrayList<>();
         this.crew = new ArrayList<>();
+        this.weapons = new ArrayList<>();
+        this.shields = 0;
+        this.maxShields = 0;
+        this.scrap = 0;
+        this.fuel = 100;
     }
 
     public static Ship createStarterShip() {
-        Ship ship = new Ship("Void Runner", 30, 8, 8, 4);
+        Ship ship = new Ship("Void Runner", 30, 8, 3, 3);
         
-        // Create a simple starter layout
-        // Row 0: Bridge, Medbay, Empty, Empty
+        // Create 3x3 grid layout - systems distributed around
+        // Row 0: Bridge, Shields, Weapons
         ship.addRoom(new Room(0, 0, RoomType.BRIDGE));
-        ship.addRoom(new Room(1, 0, RoomType.MEDBAY));
-        ship.addRoom(new Room(2, 0, RoomType.EMPTY));
-        ship.addRoom(new Room(3, 0, RoomType.EMPTY));
+        ship.addRoom(new Room(1, 0, RoomType.SHIELDS));
+        ship.addRoom(new Room(2, 0, RoomType.WEAPONS));
         
-        // Row 1: Shields, Weapons, Engines, Oxygen
-        ship.addRoom(new Room(0, 1, RoomType.SHIELDS));
-        ship.addRoom(new Room(1, 1, RoomType.WEAPONS));
-        ship.addRoom(new Room(2, 1, RoomType.ENGINES));
-        ship.addRoom(new Room(3, 1, RoomType.OXYGEN));
+        // Row 1: Engines, Medbay, Oxygen
+        ship.addRoom(new Room(0, 1, RoomType.ENGINES));
+        ship.addRoom(new Room(1, 1, RoomType.MEDBAY));
+        ship.addRoom(new Room(2, 1, RoomType.OXYGEN));
         
-        // Row 2: Empty, Empty, Empty, Empty
-        for (int x = 0; x < 4; x++) {
-            ship.addRoom(new Room(x, 2, RoomType.EMPTY));
-        }
-        
-        // Row 3: Empty, Empty, Empty, Empty
-        for (int x = 0; x < 4; x++) {
-            ship.addRoom(new Room(x, 3, RoomType.EMPTY));
-        }
+        // Row 2: Sensors, Doors, Empty
+        ship.addRoom(new Room(0, 2, RoomType.SENSORS));
+        ship.addRoom(new Room(1, 2, RoomType.DOORS));
+        ship.addRoom(new Room(2, 2, RoomType.EMPTY));
         
         // Add starter crew
         ship.addCrew(new Crew("Captain", CrewRole.CAPTAIN));
         ship.addCrew(new Crew("Engineer", CrewRole.ENGINEER));
+        
+        // Add starter weapons
+        ship.addWeapon(new Weapon("Basic Laser", WeaponType.LASER, 10, 1, 1));
+        ship.addWeapon(new Weapon("Missile Launcher", WeaponType.MISSILE, 20, 2, 2));
+        
+        // Initialize shields
+        ship.maxShields = 4;
+        ship.shields = 0;
         
         return ship;
     }
@@ -68,6 +79,10 @@ public class Ship {
 
     public void addCrew(Crew crewMember) {
         crew.add(crewMember);
+    }
+
+    public void addWeapon(Weapon weapon) {
+        weapons.add(weapon);
     }
 
     public Room getRoom(int x, int y) {
@@ -121,7 +136,16 @@ public class Ship {
     
     public List<Room> getRooms() { return rooms; }
     public List<Crew> getCrew() { return crew; }
+    public List<Weapon> getWeapons() { return weapons; }
     public int getGridWidth() { return gridWidth; }
     public int getGridHeight() { return gridHeight; }
+    public int getShields() { return shields; }
+    public void setShields(int shields) { this.shields = Math.max(0, Math.min(shields, maxShields)); }
+    public int getMaxShields() { return maxShields; }
+    public void setMaxShields(int max) { this.maxShields = max; }
+    public int getScrap() { return scrap; }
+    public void setScrap(int scrap) { this.scrap = scrap; }
+    public int getFuel() { return fuel; }
+    public void setFuel(int fuel) { this.fuel = fuel; }
 }
 

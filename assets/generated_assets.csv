@@ -1,0 +1,30 @@
+Asset Type,Asset Name,Description,Status,Generator Method,Used In
+Sprite,Ship Room - Bridge,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.BRIDGE),ShipScreenNew - room buttons
+Sprite,Ship Room - Medbay,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.MEDBAY),ShipScreenNew - room buttons
+Sprite,Ship Room - Shields,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.SHIELDS),ShipScreenNew - room buttons
+Sprite,Ship Room - Weapons,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.WEAPONS),ShipScreenNew - room buttons
+Sprite,Ship Room - Engines,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.ENGINES),ShipScreenNew - room buttons
+Sprite,Ship Room - Oxygen,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.OXYGEN),ShipScreenNew - room buttons
+Sprite,Ship Room - Sensors,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.SENSORS),ShipScreenNew - room buttons
+Sprite,Ship Room - Doors,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.DOORS),ShipScreenNew - room buttons
+Sprite,Ship Room - Empty,64x64 pixel art room sprite,Generated,generateRoomSprite(RoomType.EMPTY),ShipScreenNew - room buttons
+Sprite,Crew Member,32x32 pixel art crew sprite (color variations),Generated,generateCrewSprite(int index),ShipScreenNew - crew portraits and room display
+Sprite,Weapon Icon,32x32 pixel art weapon icon,Generated,generateWeaponIcon(),ShipScreenNew - weapon list
+Sprite,Fire Effect,32x32 pixel art fire sprite,Generated,generateFireSprite(),ShipScreenNew - room hazards
+Sprite,Breach Effect,32x32 pixel art breach sprite,Generated,generateBreachSprite(),ShipScreenNew - room hazards
+Sprite,Shield Bubble,32x32 pixel art shield sprite,Generated,generateShieldSprite(),CombatScreen - shield display
+Sprite,Power Box - Powered,18x18 pixel art power box (green),Generated,generatePowerBoxSprite(true),ShipScreenNew - power management
+Sprite,Power Box - Unpowered,18x18 pixel art power box (gray),Generated,generatePowerBoxSprite(false),ShipScreenNew - power management
+Sprite,Ship Hull,64x64 pixel art hull texture,Generated,generateShipHullSprite(),Future use - ship exterior
+Sprite,Biome Icon - Ion Storm,32x32 pixel art biome icon,Generated,generateBiomeIcon(BiomeType.ION_STORM),Future use - sector display
+Sprite,Biome Icon - Nebula Jungle,32x32 pixel art biome icon,Generated,generateBiomeIcon(BiomeType.NEBULA_JUNGLE),Future use - sector display
+Sprite,Biome Icon - Crystal Cluster,32x32 pixel art biome icon,Generated,generateBiomeIcon(BiomeType.CRYSTAL_CLUSTER),Future use - sector display
+Sprite,Biome Icon - Derelict Graveyard,32x32 pixel art biome icon,Generated,generateBiomeIcon(BiomeType.DERELICT_GRAVEYARD),Future use - sector display
+Sprite,Enemy Ship,64x64 pixel art enemy ship sprite,Generated,generateEnemyShipSprite(),CombatScreen - enemy display
+Sprite,Weapon Projectile,16x16 pixel art projectile sprite,Generated,generateProjectileSprite(),CombatScreen - weapon effects
+Icon,Skill Icon - Engineering,24x24 pixel art skill icon,Generated,generateSkillIcon(Skill.ENGINEERING),Future use - crew skill display
+Icon,Skill Icon - Medical,24x24 pixel art skill icon,Generated,generateSkillIcon(Skill.MEDICAL),Future use - crew skill display
+Icon,Skill Icon - Navigation,24x24 pixel art skill icon,Generated,generateSkillIcon(Skill.NAVIGATION),Future use - crew skill display
+Icon,Skill Icon - Combat,24x24 pixel art skill icon,Generated,generateSkillIcon(Skill.COMBAT),Future use - crew skill display
+Icon,Skill Icon - Research,24x24 pixel art skill icon,Generated,generateSkillIcon(Skill.RESEARCH),Future use - crew skill display
+
