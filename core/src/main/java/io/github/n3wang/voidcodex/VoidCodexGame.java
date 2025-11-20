@@ -23,10 +23,13 @@ public class VoidCodexGame extends Game {
     public void create() {
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         gameState = new GameState();
-        
+
         // Create a simple default-round drawable
         createDefaultRoundDrawable();
-        
+
+        // Initialize automation handler for MCP server integration
+        io.github.n3wang.voidcodex.util.AutomationHandler.init(this);
+
         // Start with scenario selection (for development)
         setScreen(new ScenarioSelectionScreen(this));
     }

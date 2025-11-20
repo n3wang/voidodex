@@ -1,0 +1,45 @@
+Asset Type,Asset Name,Description,Size,Status,PixelLab ID,File Path,Notes
+Character,Captain Profile,Space captain with command uniform,48x48,Ready,23342955-63df-49a9-b2ab-66d4a748e6c1,assets/pixellab/characters/captain/rotations/south.png,Extract profile from south.png
+Character,Engineer Profile,Space engineer with tool belt and goggles,48x48,Ready,301f7893-4edb-4da0-8878-ddf7a2dc9d8f,assets/pixellab/characters/engineer/rotations/south.png,Extract profile from south.png
+Character,Medic Profile,Space medic with medical coat and stethoscope,48x48,Ready,dbc89bcd-faad-4a5d-8ea1-43045b00d7bd,assets/pixellab/characters/medic/rotations/south.png,Extract profile from south.png
+Character,Pilot Profile,Space pilot with flight helmet and sunglasses,48x48,Ready,3fcfb823-f587-4fd3-80b5-8b2c738e3938,assets/pixellab/characters/pilot/rotations/south.png,Extract profile from south.png
+Character,Soldier Profile,Space soldier with combat armor and helmet,48x48,Ready,8473de00-7a09-4849-86d9-54a5bb443d49,assets/pixellab/characters/soldier/rotations/south.png,Extract profile from south.png
+Character,Scientist Profile,Space scientist with lab coat and glasses,48x48,Ready,bae24e55-9503-4c5d-a15d-194b9fd43921,assets/pixellab/characters/scientist/rotations/south.png,Extract profile from south.png
+Room,Bridge Room,Space ship bridge control room with panels and screens,64x64,Ready,fb276fa6-c2e2-4dc2-8318-10c15225414d,assets/pixellab/rooms/bridge.png,Isometric tile
+Room,Weapons Room,Space ship weapons room with laser cannons,64x64,Ready,8dd2fe16-66bc-4847-9c4f-20a70fc62704,assets/pixellab/rooms/weapons.png,Isometric tile
+Room,Shields Room,Space ship shield generator with energy emitters,64x64,Ready,bbd965ec-8ec7-476c-87aa-9861e6511697,assets/pixellab/rooms/shields.png,Isometric tile
+Room,Engines Room,Space ship engine room with thrusters,64x64,Ready,47eed372-0c51-4920-97d9-afb6e3fd8cc6,assets/pixellab/rooms/engines.png,Isometric tile
+Room,Medbay Room,Space ship medical bay with beds and equipment,64x64,Ready,05c9d32c-c5fb-4e5b-926e-01b592771893,assets/pixellab/rooms/medbay.png,Isometric tile
+Room,Oxygen Room,Space ship oxygen system with air filters,64x64,Ready,73c7306d-fe78-4354-92f8-6b21ab91df2a,assets/pixellab/rooms/oxygen.png,Isometric tile
+Room,Sensors Room,Space ship sensor array with radar dishes,64x64,Ready,476fab76-de97-4fd1-900b-56ddb6ddee17,assets/pixellab/rooms/sensors.png,Isometric tile
+Room,Doors Room,Space ship door control with mechanisms,64x64,Ready,7ff19012-e3f1-4fe4-a9d6-a457e9e8161a,assets/pixellab/rooms/doors.png,Isometric tile
+Icon,Bridge Icon,Small icon for bridge system,24x24,Pending,,assets/pixellab/icons/bridge_icon.png,UI icon
+Icon,Weapons Icon,Small icon for weapons system,24x24,Pending,,assets/pixellab/icons/weapons_icon.png,UI icon
+Icon,Shields Icon,Small icon for shields system,24x24,Pending,,assets/pixellab/icons/shields_icon.png,UI icon
+Icon,Engines Icon,Small icon for engines system,24x24,Pending,,assets/pixellab/icons/engines_icon.png,UI icon
+Icon,Medbay Icon,Small icon for medbay system,24x24,Pending,,assets/pixellab/icons/medbay_icon.png,UI icon
+Icon,Oxygen Icon,Small icon for oxygen system,24x24,Pending,,assets/pixellab/icons/oxygen_icon.png,UI icon
+Icon,Sensors Icon,Small icon for sensors system,24x24,Pending,,assets/pixellab/icons/sensors_icon.png,UI icon
+Icon,Doors Icon,Small icon for doors system,24x24,Pending,,assets/pixellab/icons/doors_icon.png,UI icon
+Weapon,Laser Weapon Icon,Laser weapon icon for UI,32x32,Pending,,assets/pixellab/weapons/laser_icon.png,Weapon icon
+Weapon,Missile Weapon Icon,Missile launcher icon for UI,32x32,Pending,,assets/pixellab/weapons/missile_icon.png,Weapon icon
+Weapon,Beam Weapon Icon,Beam weapon icon for UI,32x32,Pending,,assets/pixellab/weapons/beam_icon.png,Weapon icon
+Weapon,Ion Weapon Icon,Ion weapon icon for UI,32x32,Pending,,assets/pixellab/weapons/ion_icon.png,Weapon icon
+Effect,Fire Effect,Fire hazard effect sprite,32x32,Pending,,assets/pixellab/effects/fire.png,Effect sprite
+Effect,Breach Effect,Hull breach effect sprite,32x32,Pending,,assets/pixellab/effects/breach.png,Effect sprite
+Effect,Shield Bubble,Shield bubble effect sprite,32x32,Pending,,assets/pixellab/effects/shield.png,Effect sprite
+Effect,Explosion Effect,Explosion effect sprite,32x32,Pending,,assets/pixellab/effects/explosion.png,Effect sprite
+Effect,Smoke Effect,Smoke effect sprite,32x32,Pending,,assets/pixellab/effects/smoke.png,Effect sprite
+Effect,Spark Effect,Electrical spark effect sprite,32x32,Pending,,assets/pixellab/effects/spark.png,Effect sprite
+Projectile,Laser Bolt,Laser projectile sprite,16x16,Pending,,assets/pixellab/projectiles/laser_bolt.png,Projectile sprite
+Projectile,Missile,Missile projectile sprite,16x16,Pending,,assets/pixellab/projectiles/missile.png,Projectile sprite
+Projectile,Beam,Beam projectile sprite,16x16,Pending,,assets/pixellab/projectiles/beam.png,Projectile sprite
+Projectile,Ion Bolt,Ion projectile sprite,16x16,Pending,,assets/pixellab/projectiles/ion_bolt.png,Projectile sprite
+UI,Power Block On,Powered power block sprite,18x18,Pending,,assets/pixellab/ui/power_block_on.png,UI element
+UI,Power Block Off,Unpowered power block sprite,18x18,Pending,,assets/pixellab/ui/power_block_off.png,UI element
+UI,Health Bar Fill,Health bar fill sprite,32x8,Pending,,assets/pixellab/ui/health_bar_fill.png,UI element
+UI,Energy Bar Fill,Energy bar fill sprite,32x8,Pending,,assets/pixellab/ui/energy_bar_fill.png,UI element
+Misc,Ship Hull Tile,Ship hull tile texture,64x64,Ready,98d7fce0-3acd-45fb-91c8-d3cd680ce0f4,assets/pixellab/misc/hull_tile.png,Misc asset
+Misc,Empty Space,Empty space background tile,64x64,Ready,1f359b9a-7c3c-4f3f-8346-e35447ffe823,assets/pixellab/misc/empty_space.png,Misc asset
+Misc,Corridor Tile,Corridor tile texture,64x64,Ready,556ba1dd-1f40-489b-b904-0c9efa77d801,assets/pixellab/misc/corridor.png,Misc asset
+

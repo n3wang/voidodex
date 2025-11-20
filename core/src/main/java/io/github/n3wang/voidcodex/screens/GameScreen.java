@@ -35,11 +35,14 @@ public abstract class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        // Debug screenshot manager - auto-capture on first render, manual via F12
-        io.github.n3wang.voidcodex.util.DebugScreenshotManager.update(getScreenName());
+        // Automation handler - process MCP commands
+        io.github.n3wang.voidcodex.util.AutomationHandler.update(getScreenName());
 
         stage.act(delta);
         stage.draw();
+
+        // Debug screenshot manager - capture AFTER rendering is complete
+        io.github.n3wang.voidcodex.util.DebugScreenshotManager.update(getScreenName());
     }
 
     @Override

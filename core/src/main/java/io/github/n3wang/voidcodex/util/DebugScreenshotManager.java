@@ -31,7 +31,7 @@ public class DebugScreenshotManager {
     private static boolean manualCaptureRequested = false;
 
     /**
-     * Call this at the start of each screen's render() method
+     * Call this at the END of each screen's render() method, after all drawing is complete
      */
     public static void update(String screenName) {
         if (!DEBUG_MODE) return;
@@ -138,5 +138,41 @@ public class DebugScreenshotManager {
      */
     public static String getScreenshotDirectory() {
         return Gdx.files.local(SCREENSHOT_DIR).path();
+    }
+
+    /**
+     * Capture a screenshot with a custom name (for automation)
+     */
+    public static void captureWithName(String customName) {
+        String timestamp = dateFormat.format(new Date());
+        String filename = String.format("%s_automated_%s.png", customName, timestamp);
+
+        try {
+            FileHandle screenshotDir = Gdx.files.local(SCREENSHOT_DIR);
+            if (!screenshotDir.exists()) {
+                screenshotDir.mkdirs();
+            }
+
+            FileHandle file = Gdx.files.local(SCREENSHOT_DIR + filename);
+
+            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0,
+                Gdx.graphics.getBackBufferWidth(),
+                Gdx.graphics.getBackBufferHeight(),
+                true);
+
+            Pixmap pixmap = new Pixmap(
+                Gdx.graphics.getBackBufferWidth(),
+                Gdx.graphics.getBackBufferHeight(),
+                Pixmap.Format.RGBA8888
+            );
+            BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
+            PixmapIO.writePNG(file, pixmap);
+            pixmap.dispose();
+
+            Gdx.app.log("DebugScreenshot", "Automated screenshot saved: " + file.path());
+
+        } catch (Exception e) {
+            Gdx.app.error("DebugScreenshot", "Failed to capture automated screenshot", e);
+        }
     }
 }

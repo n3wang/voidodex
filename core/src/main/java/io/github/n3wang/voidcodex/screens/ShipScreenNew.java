@@ -63,9 +63,6 @@ public class ShipScreenNew extends GameScreen {
 
     @Override
     public void render(float delta) {
-        // Debug screenshot manager - auto-capture on first render, manual via F12
-        io.github.n3wang.voidcodex.util.DebugScreenshotManager.update("ShipScreen");
-
         GameTimeState timeState = game.getGameState().getTimeState();
 
         // Update game time (only if not paused)
@@ -524,10 +521,9 @@ public class ShipScreenNew extends GameScreen {
         }
         portrait.pad(5f);
 
-        // Crew sprite
-        int crewIndex = game.getGameState().getCurrentShip().getCrew().indexOf(crew);
-        Texture crewTexture = PixelArtGenerator.generateCrewSprite(crewIndex);
-        Image crewImage = new Image(new TextureRegion(crewTexture));
+        // Crew profile picture (headshot)
+        Texture crewProfile = PixelArtGenerator.generateCrewProfile(crew.getRole());
+        Image crewImage = new Image(new TextureRegion(crewProfile));
         crewImage.setSize(32f, 32f);
         if (isSelected) {
             crewImage.setColor(Color.YELLOW);

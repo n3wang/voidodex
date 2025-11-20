@@ -1,9 +1,10 @@
 package io.github.n3wang.voidcodex.util;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import io.github.n3wang.voidcodex.model.CrewRole;
 import io.github.n3wang.voidcodex.model.RoomType;
 
 import java.util.HashMap;
@@ -85,6 +86,13 @@ public class PixelArtGenerator {
                 pixmap.setColor(baseColor);
                 pixmap.fillCircle(size / 2, size / 2, 15);
                 break;
+            case DOORS:
+                // Add door pattern
+                pixmap.fillRectangle(20, 10, 24, 44);
+                break;
+            case EMPTY:
+                // No pattern for empty rooms
+                break;
         }
     }
 
@@ -103,7 +111,7 @@ public class PixelArtGenerator {
     }
 
     /**
-     * Generate a simple crew member sprite.
+     * Generate a simple crew member sprite (full body for map view).
      */
     public static Texture generateCrewSprite(int index) {
         String key = "crew_" + index;
@@ -141,6 +149,101 @@ public class PixelArtGenerator {
         pixmap.dispose();
         cachedTextures.put(key, texture);
         return texture;
+    }
+    
+    /**
+     * Generate a crew profile picture (headshot) based on role.
+     * Uses PixelLab assets if available, otherwise falls back to generated sprite.
+     */
+    public static Texture generateCrewProfile(CrewRole role) {
+        String key = "profile_" + role.name();
+        if (cachedTextures.containsKey(key)) {
+            return cachedTextures.get(key);
+        }
+        
+        // Try to load PixelLab character asset
+        String roleName = role.name().toLowerCase();
+        FileHandle characterFile = Gdx.files.internal("pixellab/characters/" + roleName + "/rotations/south.png");
+        
+        if (characterFile.exists()) {
+            try {
+                // Load the full character sprite
+                Pixmap fullSprite = new Pixmap(characterFile);
+                
+                // Extract profile picture (head and upper body area)
+                // Character is ~28px tall in 48x48 canvas, head is roughly top 16-20 pixels
+                int profileSize = 32; // Size of profile picture
+                int headStartY = 4; // Start of head in the sprite
+                int headHeight = 20; // Height of head/shoulders area
+                int centerX = fullSprite.getWidth() / 2;
+                
+                // Create profile picture (headshot)
+                Pixmap profilePixmap = new Pixmap(profileSize, profileSize, Pixmap.Format.RGBA8888);
+                profilePixmap.setColor(0, 0, 0, 0); // Transparent background
+                profilePixmap.fill();
+                
+                // Copy head and upper body area, centered
+                int srcX = Math.max(0, centerX - profileSize / 2);
+                int srcY = headStartY;
+                int copyWidth = Math.min(profileSize, fullSprite.getWidth() - srcX);
+                int copyHeight = Math.min(headHeight, fullSprite.getHeight() - srcY);
+                
+                // Draw the head/upper body area
+                for (int y = 0; y < copyHeight && y < profileSize; y++) {
+                    for (int x = 0; x < copyWidth && x < profileSize; x++) {
+                        int srcPixelX = srcX + x;
+                        int srcPixelY = srcY + y;
+                        if (srcPixelX < fullSprite.getWidth() && srcPixelY < fullSprite.getHeight()) {
+                            int pixel = fullSprite.getPixel(srcPixelX, srcPixelY);
+                            int offsetX = (profileSize - copyWidth) / 2;
+                            profilePixmap.drawPixel(offsetX + x, y, pixel);
+                        }
+                    }
+                }
+                
+                Texture texture = new Texture(profilePixmap);
+                profilePixmap.dispose();
+                fullSprite.dispose();
+                cachedTextures.put(key, texture);
+                return texture;
+            } catch (Exception e) {
+                Gdx.app.error("PixelArtGenerator", "Failed to load PixelLab character for " + roleName + ": " + e.getMessage());
+                // Fall through to fallback
+            }
+        }
+        
+        // Fallback: Generate simple profile picture
+        Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
+        pixmap.setColor(0, 0, 0, 0); // Transparent background
+        pixmap.fill();
+        
+        // Head (circle) - larger for profile
+        com.badlogic.gdx.graphics.Color headColor = getRoleColor(role);
+        pixmap.setColor(headColor);
+        pixmap.fillCircle(16, 20, 10);
+        
+        // Simple face features
+        pixmap.setColor(0.2f, 0.2f, 0.2f, 1f);
+        pixmap.fillCircle(12, 18, 2); // Left eye
+        pixmap.fillCircle(20, 18, 2); // Right eye
+        pixmap.drawLine(14, 22, 18, 22); // Mouth
+        
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+        cachedTextures.put(key, texture);
+        return texture;
+    }
+    
+    private static com.badlogic.gdx.graphics.Color getRoleColor(CrewRole role) {
+        switch (role) {
+            case CAPTAIN: return new com.badlogic.gdx.graphics.Color(0.4f, 0.2f, 0.6f, 1f); // Purple
+            case ENGINEER: return new com.badlogic.gdx.graphics.Color(0.8f, 0.6f, 0.2f, 1f); // Orange
+            case MEDIC: return new com.badlogic.gdx.graphics.Color(0.9f, 0.9f, 0.9f, 1f); // White
+            case PILOT: return new com.badlogic.gdx.graphics.Color(0.2f, 0.6f, 0.8f, 1f); // Blue
+            case SOLDIER: return new com.badlogic.gdx.graphics.Color(0.6f, 0.3f, 0.3f, 1f); // Red-brown
+            case SCIENTIST: return new com.badlogic.gdx.graphics.Color(0.6f, 0.4f, 0.8f, 1f); // Purple
+            default: return new com.badlogic.gdx.graphics.Color(0.8f, 0.6f, 0.4f, 1f); // Tan
+        }
     }
 
     /**
