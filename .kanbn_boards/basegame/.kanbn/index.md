@@ -9,9 +9,9 @@ completedColumns:
 
 ## Backlog
 
-## Todo
+- [combat-mechanics](tasks/combat-mechanics.md)
 
-- [combat-movements](tasks/combat-movements.md)
+## Todo
 
 ## In Progress
 

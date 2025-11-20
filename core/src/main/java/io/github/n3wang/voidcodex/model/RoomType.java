@@ -5,14 +5,14 @@ package io.github.n3wang.voidcodex.model;
  */
 public enum RoomType {
     EMPTY("Empty", 0, 0),
-    BRIDGE("Bridge", 0, 10),
-    MEDBAY("Medbay", 2, 15),
-    SHIELDS("Shields", 2, 20),
-    WEAPONS("Weapons", 3, 15),
-    ENGINES("Engines", 2, 15),
-    OXYGEN("Oxygen", 1, 10),
-    SENSORS("Sensors", 1, 10),
-    DOORS("Doors", 0, 5);
+    BRIDGE("Bridge", 10, 10), // Increased max power
+    MEDBAY("Medbay", 10, 15),
+    SHIELDS("Shields", 10, 20),
+    WEAPONS("Weapons", 10, 15),
+    ENGINES("Engines", 10, 15),
+    OXYGEN("Oxygen", 10, 10), // Increased max power
+    SENSORS("Sensors", 10, 10),
+    DOORS("Doors", 10, 5);
 
     private final String displayName;
     private final int defaultMaxPower;

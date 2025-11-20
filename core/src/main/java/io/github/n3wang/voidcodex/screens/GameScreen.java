@@ -20,6 +20,14 @@ public abstract class GameScreen implements Screen {
         this.stage = new Stage(new FitViewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT));
     }
 
+    /**
+     * Override this to provide a custom name for debug screenshots.
+     * Defaults to the class name.
+     */
+    protected String getScreenName() {
+        return getClass().getSimpleName();
+    }
+
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
@@ -27,6 +35,9 @@ public abstract class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        // Debug screenshot manager - auto-capture on first render, manual via F12
+        io.github.n3wang.voidcodex.util.DebugScreenshotManager.update(getScreenName());
+
         stage.act(delta);
         stage.draw();
     }

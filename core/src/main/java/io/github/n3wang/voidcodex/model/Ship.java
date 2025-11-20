@@ -40,7 +40,7 @@ public class Ship {
     }
 
     public static Ship createStarterShip() {
-        Ship ship = new Ship("Void Runner", 30, 8, 3, 3);
+        Ship ship = new Ship("Void Runner", 30, 100, 3, 3); // Start with 100 power for testing
         
         // Create 3x3 grid layout - systems distributed around
         // Row 0: Bridge, Shields, Weapons
@@ -116,9 +116,10 @@ public class Ship {
     
     /**
      * Try to add power to a room. Returns true if successful.
+     * No max power limit - can allocate as much as available.
      */
     public boolean addPowerToRoom(Room room) {
-        if (availablePower > 0 && room.getPowerLevel() < room.getMaxPower()) {
+        if (availablePower > 0) {
             room.setPowerLevel(room.getPowerLevel() + 1);
             availablePower--;
             return true;

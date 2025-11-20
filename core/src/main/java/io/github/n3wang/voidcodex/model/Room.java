@@ -18,6 +18,9 @@ public class Room {
     // 2x2 grid of tiles - each tile can hold one crew member
     // tiles[tileX][tileY] = Crew at that tile position, or null if empty
     private Crew[][] tiles;
+    
+    // Oxygen level per tile (0.0 to 1.0, where 1.0 is full oxygen)
+    private float[][] tileOxygen;
 
     public Room(int x, int y, RoomType type) {
         this.x = x;
@@ -30,6 +33,34 @@ public class Room {
         this.hasFire = false;
         this.hasBreach = false;
         this.tiles = new Crew[2][2]; // 2x2 grid of tiles
+        this.tileOxygen = new float[2][2]; // Initialize oxygen levels
+        // Start with random oxygen levels - some tiles without oxygen for testing
+        java.util.Random random = new java.util.Random();
+        for (int tileX = 0; tileX < 2; tileX++) {
+            for (int tileY = 0; tileY < 2; tileY++) {
+                // Randomly set some tiles to 0 oxygen, others to partial
+                if (random.nextFloat() < 0.3f) {
+                    // 30% chance of no oxygen
+                    tileOxygen[tileX][tileY] = 0.0f;
+                } else {
+                    // 70% chance of partial oxygen (0.3 to 0.8)
+                    tileOxygen[tileX][tileY] = 0.3f + random.nextFloat() * 0.5f;
+                }
+            }
+        }
+    }
+    
+    public float getTileOxygen(int tileX, int tileY) {
+        if (tileX < 0 || tileX >= 2 || tileY < 0 || tileY >= 2) {
+            return 0.0f;
+        }
+        return tileOxygen[tileX][tileY];
+    }
+    
+    public void setTileOxygen(int tileX, int tileY, float oxygen) {
+        if (tileX >= 0 && tileX < 2 && tileY >= 0 && tileY < 2) {
+            tileOxygen[tileX][tileY] = Math.max(0.0f, Math.min(1.0f, oxygen));
+        }
     }
     
     /**

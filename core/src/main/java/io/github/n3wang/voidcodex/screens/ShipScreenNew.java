@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -33,7 +34,7 @@ public class ShipScreenNew extends GameScreen {
     private ShipTileMapActor shipTileMap; // Tile-based ship rendering
     private Table rightPanel; // Enemy ship grid (combat)
     private Table bottomPanel; // Weapons and systems
-    
+
     // Top bar components
     private Label hullLabel;
     private ProgressBar hullBar;
@@ -46,14 +47,14 @@ public class ShipScreenNew extends GameScreen {
     private TextButton pauseButton;
     private TextButton slowButton;
     private TextButton fastButton;
-    
+
     // Game time tracking
     private float gameTime = 0f;
-    
+
     // State
     private List<Crew> selectedCrew;
     private Weapon selectedWeapon;
-    
+
     public ShipScreenNew(VoidCodexGame game) {
         super(game);
         selectedCrew = new ArrayList<>();
@@ -62,27 +63,33 @@ public class ShipScreenNew extends GameScreen {
 
     @Override
     public void render(float delta) {
+        // Debug screenshot manager - auto-capture on first render, manual via F12
+        io.github.n3wang.voidcodex.util.DebugScreenshotManager.update("ShipScreen");
+
         GameTimeState timeState = game.getGameState().getTimeState();
-        
+
         // Update game time (only if not paused)
         if (!timeState.isPaused()) {
             float timeScale = timeState.getTimeScale();
             float scaledDelta = delta * timeScale;
             gameTime += scaledDelta;
-            
+
             // Update crew movement (time-based, 0.5 seconds per tile)
             updateCrewMovement(scaledDelta);
-            
+
             // Update weapon charges
             updateWeaponCharges(scaledDelta);
+
+            // Update oxygen system
+            updateOxygenSystem(scaledDelta);
         }
-        
+
         // Always render (even when paused)
         super.render(delta);
-        
+
         // Update UI
         updateTopBar();
-        
+
         // Update tile map position (in case UI moved) - only update position, not create
         if (shipTileMap != null && centerPanel != null) {
             centerPanel.layout();
@@ -94,14 +101,14 @@ public class ShipScreenNew extends GameScreen {
             shipTileMap.toFront(); // Keep it on top for input
         }
     }
-    
+
     /**
      * Handle crew selection logic
      */
     private void handleCrewSelection(Crew crew) {
         // Debug: log selection
         Gdx.app.log("ShipScreen", "Selecting crew: " + crew.getName());
-        
+
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
             // Shift-right-click: toggle selection
             if (selectedCrew.contains(crew)) {
@@ -121,14 +128,14 @@ public class ShipScreenNew extends GameScreen {
         updateCrewPortraits();
         updateShipGrid(); // Update ship grid to show selected crew
     }
-    
+
     /**
      * Handle tile click - LEFT CLICK = SELECT, RIGHT CLICK = MOVE
      */
     private void handleTileClick(Room room, int tileX, int tileY, int button) {
         Ship ship = game.getGameState().getCurrentShip();
         Crew crewAtTile = room.getCrewAtTile(tileX, tileY);
-        
+
         if (button == Input.Buttons.LEFT) {
             // LEFT CLICK: Select crew at tile
             if (crewAtTile != null) {
@@ -141,26 +148,26 @@ public class ShipScreenNew extends GameScreen {
                 if (crewAtTile == null) {
                     // Check if any selected crew is moving
                     boolean anyMoving = selectedCrew.stream().anyMatch(Crew::isMoving);
-                    
+
                     if (!anyMoving) {
                         // Move first selected crew to this tile
                         Crew crew = selectedCrew.get(0);
-                        
+
                         // Remove crew from current tile (but don't remove from room yet - let movement handle it)
                         Room currentRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
-                        
+
                         // Use tile-based pathfinding
                         List<int[]> path = TilePathfinding.findPath(ship,
-                                crew.getCurrentRoomX(), crew.getCurrentRoomY(), 
+                                crew.getCurrentRoomX(), crew.getCurrentRoomY(),
                                 crew.getCurrentTileX(), crew.getCurrentTileY(),
                                 room.getX(), room.getY(), tileX, tileY);
-                        
+
                         if (!path.isEmpty()) {
                             // Remove from current tile before starting movement
                             if (currentRoom != null) {
                                 currentRoom.removeCrewFromTile(crew.getCurrentTileX(), crew.getCurrentTileY());
                             }
-                            
+
                             // Set target and start movement
                             crew.setTargetRoomX(room.getX());
                             crew.setTargetRoomY(room.getY());
@@ -168,19 +175,19 @@ public class ShipScreenNew extends GameScreen {
                             crew.setTargetTileY(tileY);
                             crew.setMoving(true);
                             crew.setMovementProgress(0.0f);
-                            
+
                             // Set first step in path
                             int[] firstStep = path.get(0);
                             crew.setNextRoomX(firstStep[0]);
                             crew.setNextRoomY(firstStep[1]);
                             crew.setNextTileX(firstStep[2]);
                             crew.setNextTileY(firstStep[3]);
-                            
+
                             updateCrewPortraits();
                             updateShipGrid();
                         } else {
                             // Path blocked, place crew directly if same room and adjacent tile
-                            if (crew.getCurrentRoomX() == room.getX() && 
+                            if (crew.getCurrentRoomX() == room.getX() &&
                                 crew.getCurrentRoomY() == room.getY()) {
                                 // Check if it's an adjacent tile (horizontal or vertical only)
                                 int dx = Math.abs(crew.getCurrentTileX() - tileX);
@@ -202,16 +209,16 @@ public class ShipScreenNew extends GameScreen {
             }
         }
     }
-    
+
     private void updateCrewMovement(float delta) {
         Ship ship = game.getGameState().getCurrentShip();
         boolean needsUpdate = false;
-        
+
         for (Crew crew : ship.getCrew()) {
             if (crew.isMoving()) {
                 // Movement speed: 2 tiles per second = 0.5 seconds per tile
                 crew.setMovementProgress(crew.getMovementProgress() + crew.getMovementSpeed() * delta);
-                
+
                 if (crew.getMovementProgress() >= 1.0f) {
                     // Reached next tile in path
                     Room currentRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
@@ -219,22 +226,22 @@ public class ShipScreenNew extends GameScreen {
                         // Remove from current tile
                         currentRoom.removeCrewFromTile(crew.getCurrentTileX(), crew.getCurrentTileY());
                     }
-                    
+
                     // Move to next tile
                     crew.setCurrentRoomX(crew.getNextRoomX());
                     crew.setCurrentRoomY(crew.getNextRoomY());
                     crew.setCurrentTileX(crew.getNextTileX());
                     crew.setCurrentTileY(crew.getNextTileY());
                     crew.setMovementProgress(0.0f);
-                    
+
                     // Place crew in new tile
                     Room nextRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
                     if (nextRoom != null) {
                         nextRoom.setCrewAtTile(crew.getCurrentTileX(), crew.getCurrentTileY(), crew);
                     }
-                    
+
                     // Check if reached final destination
-                    if (crew.getCurrentRoomX() == crew.getTargetRoomX() && 
+                    if (crew.getCurrentRoomX() == crew.getTargetRoomX() &&
                         crew.getCurrentRoomY() == crew.getTargetRoomY() &&
                         crew.getCurrentTileX() == crew.getTargetTileX() &&
                         crew.getCurrentTileY() == crew.getTargetTileY()) {
@@ -248,7 +255,7 @@ public class ShipScreenNew extends GameScreen {
                                 crew.getCurrentTileX(), crew.getCurrentTileY(),
                                 crew.getTargetRoomX(), crew.getTargetRoomY(),
                                 crew.getTargetTileX(), crew.getTargetTileY());
-                        
+
                         if (!path.isEmpty()) {
                             int[] nextStep = path.get(0);
                             crew.setNextRoomX(nextStep[0]);
@@ -264,7 +271,7 @@ public class ShipScreenNew extends GameScreen {
                 }
             }
         }
-        
+
         if (needsUpdate) {
             updateShipGrid();
         }
@@ -306,7 +313,7 @@ public class ShipScreenNew extends GameScreen {
 
         stage.addActor(mainTable);
         setupKeyboardInput();
-        
+
         // Create tile map after UI is set up
         updateShipGrid();
     }
@@ -321,24 +328,24 @@ public class ShipScreenNew extends GameScreen {
         // Hull
         Label hullText = new Label("Hull:", game.getSkin());
         topBar.add(hullText).padRight(5f);
-        
+
         hullBar = new ProgressBar(0, ship.getMaxHull(), 1, false, game.getSkin());
         hullBar.setValue(ship.getCurrentHull());
         hullBar.setWidth(100f);
         topBar.add(hullBar).padRight(10f);
-        
+
         hullLabel = new Label(ship.getCurrentHull() + "/" + ship.getMaxHull(), game.getSkin());
         topBar.add(hullLabel).padRight(15f);
 
         // Shields
         Label shieldText = new Label("Shields:", game.getSkin());
         topBar.add(shieldText).padRight(5f);
-        
+
         shieldBar = new ProgressBar(0, ship.getMaxShields(), 1, false, game.getSkin());
         shieldBar.setValue(ship.getShields());
         shieldBar.setWidth(80f);
         topBar.add(shieldBar).padRight(10f);
-        
+
         shieldLabel = new Label(ship.getShields() + "/" + ship.getMaxShields(), game.getSkin());
         shieldLabel.setColor(Color.CYAN);
         topBar.add(shieldLabel).padRight(15f);
@@ -346,14 +353,14 @@ public class ShipScreenNew extends GameScreen {
         // Resources
         scrapLabel = new Label("Scrap: " + ship.getScrap(), game.getSkin());
         topBar.add(scrapLabel).padRight(10f);
-        
+
         fuelLabel = new Label("Fuel: " + ship.getFuel(), game.getSkin());
         topBar.add(fuelLabel).padRight(10f);
-        
+
         powerLabel = new Label("Energy: " + ship.getAvailablePower() + "/" + ship.getMaxPower() + " (Used: " + ship.getUsedPower() + ")", game.getSkin());
         powerLabel.setColor(Color.YELLOW);
         topBar.add(powerLabel).padRight(15f);
-        
+
         // Debug timer
         timerLabel = new Label("Time: 0.00s", game.getSkin());
         timerLabel.setColor(Color.CYAN);
@@ -423,23 +430,23 @@ public class ShipScreenNew extends GameScreen {
 
         updateTimeButtons();
     }
-    
+
     private void performWarp() {
         // Advance to next sector
         game.getGameState().advanceSector();
-        
+
         // Generate new sector
         Sector newSector = new Sector(
             game.getGameState().getCurrentSectorIndex(),
             io.github.n3wang.voidcodex.util.BiomeGenerator.generateRandomBiome()
         );
         game.getGameState().setCurrentSector(newSector);
-        
+
         // Update UI
         updateShipGrid();
         updateTopBar();
     }
-    
+
     private void showInfoDialog() {
         // Create a simple info dialog
         Dialog dialog = new Dialog("Ship Information", game.getSkin()) {
@@ -448,10 +455,10 @@ public class ShipScreenNew extends GameScreen {
                 hide();
             }
         };
-        
+
         Ship ship = game.getGameState().getCurrentShip();
         Sector sector = game.getGameState().getCurrentSector();
-        
+
         String info = "Ship: " + ship.getName() + "\n";
         info += "Hull: " + ship.getCurrentHull() + "/" + ship.getMaxHull() + "\n";
         info += "Shields: " + ship.getShields() + "/" + ship.getMaxShields() + "\n";
@@ -461,7 +468,7 @@ public class ShipScreenNew extends GameScreen {
             info += "Sector: " + sector.getBiome().getName() + "\n";
             info += "Biome: " + sector.getBiome().getDescription();
         }
-        
+
         dialog.text(info);
         dialog.button("OK", true);
         dialog.show(stage);
@@ -476,7 +483,7 @@ public class ShipScreenNew extends GameScreen {
             pauseButton.setText("PAUSE");
             pauseButton.setColor(Color.WHITE);
         }
-        
+
         slowButton.setChecked(timeState.getTimeScale() == 0.5f);
         fastButton.setChecked(timeState.getTimeScale() == 2.0f);
     }
@@ -510,7 +517,7 @@ public class ShipScreenNew extends GameScreen {
     private Table createCrewPortrait(Crew crew) {
         Table portrait = new Table();
         boolean isSelected = selectedCrew.contains(crew);
-        
+
         portrait.setBackground(game.getDrawable("default-round"));
         if (isSelected) {
             portrait.setColor(Color.YELLOW);
@@ -573,19 +580,19 @@ public class ShipScreenNew extends GameScreen {
         // Don't add a placeholder - the tile map actor will be added directly to stage
         // Just add empty space to reserve the area
         centerPanel.add().size(ship.getGridWidth() * 60f, ship.getGridHeight() * 60f);
-        
+
         // Don't create tile map here - it will be created after UI is laid out
     }
 
     private void updateShipGrid() {
         Ship ship = game.getGameState().getCurrentShip();
-        
+
         // Create or update tile-based ship map
         if (shipTileMap == null) {
             shipTileMap = new ShipTileMapActor(ship, selectedCrew, (roomX, roomY, tileX, tileY, button) -> {
                 handleTileMapClick(roomX, roomY, tileX, tileY, button);
             });
-            
+
             // Position it to match the center panel's map placeholder
             // We'll position it after the UI is laid out
             if (centerPanel != null) {
@@ -597,34 +604,45 @@ public class ShipScreenNew extends GameScreen {
                 float mapY = stagePos.y + 40; // Below title (30px title + 10px padding)
                 shipTileMap.setPosition(mapX, mapY);
             }
-            
+
             // Add directly to stage so it can receive input
             // Add it on top of other actors so it receives input first
             stage.addActor(shipTileMap);
-            
+
             // Make sure it's touchable and visible
             shipTileMap.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
             shipTileMap.setVisible(true);
-            
+
             // Bring to front AFTER setting touchable - this ensures it's on top
             shipTileMap.toFront();
         } else {
             shipTileMap.setShip(ship);
             shipTileMap.setSelectedCrew(selectedCrew);
+
+            // Update position in case UI moved
+            if (centerPanel != null) {
+                centerPanel.layout();
+                Vector2 stagePos = centerPanel.localToStageCoordinates(new Vector2(0, 0));
+                float mapX = stagePos.x + 10;
+                float mapY = stagePos.y + 40;
+                shipTileMap.setPosition(mapX, mapY);
+                shipTileMap.setVisible(true);
+                shipTileMap.toFront();
+            }
         }
     }
-    
+
     /**
      * Handle clicks on the tile map
      */
     private void handleTileMapClick(int roomX, int roomY, int tileX, int tileY, int button) {
         Ship ship = game.getGameState().getCurrentShip();
         Room room = ship.getRoom(roomX, roomY);
-        
+
         if (room == null || room.getType() == RoomType.EMPTY) {
             return;
         }
-        
+
         if (tileX < 0 || tileY < 0) {
             // Clicked on room but not on a specific tile - allow selection of crew in room
             // Find first crew in this room and select them
@@ -637,7 +655,7 @@ public class ShipScreenNew extends GameScreen {
             }
             return;
         }
-        
+
         // Use existing tile click handler
         handleTileClick(room, tileX, tileY, button);
     }
@@ -659,7 +677,7 @@ public class ShipScreenNew extends GameScreen {
 
     private void updateEnemyShipGrid() {
         rightPanel.clearChildren();
-        
+
         Label title = new Label("ENEMY SHIP", game.getSkin(), "subtitle");
         rightPanel.add(title).padBottom(10f).row();
 
@@ -698,7 +716,7 @@ public class ShipScreenNew extends GameScreen {
         roomTable.add(typeLabel);
 
         Button button = new Button(roomTable, game.getSkin());
-        
+
         // Weapon targeting
         button.addListener(new ClickListener() {
             @Override
@@ -713,6 +731,13 @@ public class ShipScreenNew extends GameScreen {
     }
 
     private void createBottomPanel() {
+        // If panel already exists, just update its contents instead of recreating
+        if (bottomPanel != null) {
+            updateBottomPanel();
+            return;
+        }
+
+        // Initial creation only
         bottomPanel = new Table();
         bottomPanel.setBackground(game.getDrawable("default-round"));
         bottomPanel.pad(10f);
@@ -723,6 +748,22 @@ public class ShipScreenNew extends GameScreen {
         bottomPanel.add(leftSide).expandX().fillX().padRight(10f);
 
         // Right: Weapons section
+        Table rightSide = new Table();
+        createWeaponsSection(rightSide);
+        bottomPanel.add(rightSide).size(400f, 200f);
+    }
+
+    private void updateBottomPanel() {
+        if (bottomPanel == null) return;
+
+        // Clear existing content
+        bottomPanel.clearChildren();
+
+        // Rebuild content with updated data
+        Table leftSide = new Table();
+        createSystemsPowerSection(leftSide);
+        bottomPanel.add(leftSide).expandX().fillX().padRight(10f);
+
         Table rightSide = new Table();
         createWeaponsSection(rightSide);
         bottomPanel.add(rightSide).size(400f, 200f);
@@ -759,7 +800,7 @@ public class ShipScreenNew extends GameScreen {
         Image weaponImage = new Image(new TextureRegion(weaponIcon));
         weaponImage.setSize(24f, 24f);
         row.add(weaponImage).size(24f, 24f).padRight(5f);
-        
+
         // Weapon name
         Label nameLabel = new Label(weapon.getName(), game.getSkin());
         nameLabel.setFontScale(0.8f);
@@ -813,75 +854,172 @@ public class ShipScreenNew extends GameScreen {
 
     private void createSystemsPowerSection(Table parent) {
         Table systemsTable = new Table();
-        systemsTable.setBackground(game.getDrawable("default-round"));
         systemsTable.pad(5f);
 
-        Label title = new Label("SYSTEMS POWER", game.getSkin(), "subtitle");
-        systemsTable.add(title).colspan(2).padBottom(5f).row();
-
+        // Total energy display - show available power
         Ship ship = game.getGameState().getCurrentShip();
+        int availablePower = ship.getAvailablePower();
+        int maxPower = ship.getMaxPower();
+        int usedPower = ship.getUsedPower();
+        Label totalEnergyLabel = new Label("Total Energy: " + availablePower + "/" + maxPower + " (Used: " + usedPower + ")", game.getSkin());
+        totalEnergyLabel.setFontScale(0.8f);
+        systemsTable.add(totalEnergyLabel).colspan(10).padBottom(5f).row();
+
         List<Room> poweredRooms = ship.getRooms().stream()
                 .filter(r -> r.getType() != RoomType.EMPTY && r.getMaxPower() > 0)
                 .toList();
 
+        // Arrange systems horizontally like in the image
         for (Room room : poweredRooms) {
-            Table systemRow = createSystemPowerRow(room, ship);
-            systemsTable.add(systemRow).fillX().padBottom(2f).row();
+            Table systemPanel = createSystemPowerPanel(room, ship);
+            systemsTable.add(systemPanel).size(60f, 120f).pad(2f);
         }
 
         parent.add(systemsTable).fillX();
     }
 
-    private Table createSystemPowerRow(Room room, Ship ship) {
-        Table row = new Table();
-        row.setBackground(game.getDrawable("default-round"));
-        row.pad(3f);
+    private Table createSystemPowerPanel(Room room, Ship ship) {
+        // Create dark gray panel with rivets (like in the image)
+        Table panel = new Table();
+        panel.setBackground(game.getDrawable("default-round"));
+        panel.setColor(0.3f, 0.3f, 0.3f, 1f); // Dark gray
+        panel.pad(4f);
 
-        // System name
-        Label nameLabel = new Label(room.getType().getDisplayName(), game.getSkin());
-        nameLabel.setFontScale(0.75f);
-        row.add(nameLabel).width(100f).left();
+        // Vertical layout: indicator light, meter, icon
+        panel.defaults().fillX().pad(2f);
 
-        // Power boxes stacked vertically (bottom to top) - use pixel art
-        Table powerBoxes = new Table();
-        // Stack from bottom to top - iterate in reverse
-        for (int i = room.getMaxPower() - 1; i >= 0; i--) {
-            boolean isPowered = i < room.getPowerLevel();
-            Texture powerBoxTexture = PixelArtGenerator.generatePowerBoxSprite(isPowered);
-            
-            final Room roomRef = room;
+        // Get current power level (read fresh each time)
+        final int currentPowerLevel = room.getPowerLevel();
 
-            // Create button with image
-            ImageButton.ImageButtonStyle style = new ImageButton.ImageButtonStyle();
-            style.imageUp = new TextureRegionDrawable(new TextureRegion(powerBoxTexture));
-            ImageButton boxButton = new ImageButton(style);
-            boxButton.addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    if (event.getButton() == Input.Buttons.LEFT) {
-                        // Left click: add power
+        // Green indicator light at top (small square)
+        Table indicatorLight = new Table();
+        indicatorLight.setBackground(game.getDrawable("default-round"));
+        if (currentPowerLevel > 0) {
+            indicatorLight.setColor(Color.GREEN);
+        } else {
+            indicatorLight.setColor(0.1f, 0.1f, 0.1f, 1f); // Dark when off
+        }
+        panel.add(indicatorLight).size(8f, 8f).row();
+
+        // Vertical power blocks (greyish-white blocks stacked)
+        Table powerBlocks = new Table();
+        powerBlocks.defaults().size(16f, 5f).pad(1f);
+        // Show up to 10 blocks
+        int maxBlocks = 10;
+        for (int i = maxBlocks - 1; i >= 0; i--) {
+            Table block = new Table();
+            block.setBackground(game.getDrawable("default-round"));
+            if (i < currentPowerLevel) {
+                // Powered block - greyish white
+                block.setColor(0.9f, 0.9f, 0.9f, 1f);
+            } else {
+                // Unpowered block - dark grey
+                block.setColor(0.15f, 0.15f, 0.15f, 1f);
+            }
+            powerBlocks.add(block).row();
+        }
+        panel.add(powerBlocks).size(18f, 80f).row();
+
+        // System icon at bottom
+        Texture iconTexture = PixelArtGenerator.generateSystemIcon(room.getType());
+        Image iconImage = new Image(new TextureRegion(iconTexture));
+        iconImage.setColor(Color.WHITE);
+        panel.add(iconImage).size(20f, 20f).row();
+
+        // Make entire panel clickable for power allocation
+        final Room roomRef = room;
+        panel.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                if (button == Input.Buttons.LEFT) {
+                    // Left click: add power (if available) - no max limit check
+                    if (ship.getAvailablePower() > 0) {
                         ship.addPowerToRoom(roomRef);
-                    } else if (event.getButton() == Input.Buttons.RIGHT) {
-                        // Right click: remove power
-                        ship.removePowerFromRoom(roomRef);
+                        createBottomPanel();
+                        updateShipGrid();
+                        updateTopBar();
                     }
-                    createBottomPanel();
-                    updateShipGrid();
-                    updateTopBar();
+                    return true;
+                } else if (button == Input.Buttons.RIGHT) {
+                    // Right click: remove power
+                    if (roomRef.getPowerLevel() > 0) {
+                        ship.removePowerFromRoom(roomRef);
+                        createBottomPanel();
+                        updateShipGrid();
+                        updateTopBar();
+                    }
+                    return true;
                 }
-            });
+                return false;
+            }
 
-            powerBoxes.add(boxButton).size(18f, 18f).pad(1f).row(); // Stack vertically
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                // Show tooltip on hover
+                showSystemTooltip(roomRef, event.getStageX(), event.getStageY());
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                // Hide tooltip
+                hideSystemTooltip();
+            }
+        });
+
+        return panel;
+    }
+
+    private Table tooltipTable;
+
+    private void showSystemTooltip(Room room, float x, float y) {
+        if (tooltipTable != null) {
+            tooltipTable.remove();
         }
 
-        row.add(powerBoxes).padLeft(5f);
+        String description = getSystemDescription(room.getType());
+        tooltipTable = new Table();
+        tooltipTable.setBackground(game.getDrawable("default-round"));
+        tooltipTable.setColor(0.2f, 0.2f, 0.2f, 0.9f);
+        tooltipTable.pad(5f);
 
-        // Power level
-        Label powerLevelLabel = new Label("[" + room.getPowerLevel() + "/" + room.getMaxPower() + "]", game.getSkin());
-        powerLevelLabel.setFontScale(0.7f);
-        row.add(powerLevelLabel).width(50f).right().padLeft(5f);
+        Label tooltipLabel = new Label(room.getType().getDisplayName() + "\n" + description + "\nPower: " + room.getPowerLevel() + "/" + room.getMaxPower(), game.getSkin());
+        tooltipLabel.setFontScale(0.7f);
+        tooltipLabel.setWrap(true);
+        tooltipTable.add(tooltipLabel).width(150f);
+        tooltipTable.pack();
+        tooltipTable.setPosition(x + 10, y + 10);
+        stage.addActor(tooltipTable);
+        tooltipTable.toFront();
+    }
 
-        return row;
+    private void hideSystemTooltip() {
+        if (tooltipTable != null) {
+            tooltipTable.remove();
+            tooltipTable = null;
+        }
+    }
+
+    private String getSystemDescription(RoomType type) {
+        switch (type) {
+            case BRIDGE:
+                return "Ship navigation and command center.";
+            case SHIELDS:
+                return "Generates protective energy barriers.";
+            case WEAPONS:
+                return "Controls ship weapon systems.";
+            case ENGINES:
+                return "Provides propulsion and speed.";
+            case MEDBAY:
+                return "Heals and treats crew members.";
+            case OXYGEN:
+                return "Maintains breathable atmosphere.";
+            case SENSORS:
+                return "Detects enemies and hazards.";
+            case DOORS:
+                return "Controls internal door systems.";
+            default:
+                return "Ship system.";
+        }
     }
 
     private void updateTopBar() {
@@ -893,11 +1031,63 @@ public class ShipScreenNew extends GameScreen {
         scrapLabel.setText("Scrap: " + ship.getScrap());
         fuelLabel.setText("Fuel: " + ship.getFuel());
         powerLabel.setText("Energy: " + ship.getAvailablePower() + "/" + ship.getMaxPower() + " (Used: " + ship.getUsedPower() + ")");
-        
+
         // Update debug timer
         if (timerLabel != null) {
             timerLabel.setText(String.format("Time: %.2fs", gameTime));
         }
+    }
+
+    private void updateOxygenSystem(float delta) {
+        Ship ship = game.getGameState().getCurrentShip();
+
+        // Find oxygen room
+        Room oxygenRoom = ship.getRooms().stream()
+                .filter(r -> r.getType() == RoomType.OXYGEN)
+                .findFirst()
+                .orElse(null);
+
+        if (oxygenRoom == null) return;
+
+        // If oxygen system is powered, recover oxygen in all tiles where oxygen is low
+        if (oxygenRoom.getPowerLevel() > 0) {
+            float fillRate = 0.8f * delta; // Fill rate per second (0.8 = 80% per second per power level)
+
+            for (Room room : ship.getRooms()) {
+                if (room.getType() == RoomType.EMPTY) continue;
+
+                for (int tileX = 0; tileX < 2; tileX++) {
+                    for (int tileY = 0; tileY < 2; tileY++) {
+                        float currentOxygen = room.getTileOxygen(tileX, tileY);
+                        // Only fill if oxygen is low (< 1.0)
+                        if (currentOxygen < 1.0f) {
+                            float newOxygen = Math.min(1.0f, currentOxygen + fillRate * oxygenRoom.getPowerLevel());
+                            room.setTileOxygen(tileX, tileY, newOxygen);
+                        }
+                    }
+                }
+            }
+        } else {
+            // If oxygen system is not powered, slowly drain oxygen
+            float drainRate = 0.1f * delta; // Drain rate per second (0.1 = 10% per second)
+
+            for (Room room : ship.getRooms()) {
+                if (room.getType() == RoomType.EMPTY) continue;
+
+                for (int tileX = 0; tileX < 2; tileX++) {
+                    for (int tileY = 0; tileY < 2; tileY++) {
+                        float currentOxygen = room.getTileOxygen(tileX, tileY);
+                        if (currentOxygen > 0.0f) {
+                            float newOxygen = Math.max(0.0f, currentOxygen - drainRate);
+                            room.setTileOxygen(tileX, tileY, newOxygen);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update ship grid to show oxygen changes
+        updateShipGrid();
     }
 
     private void updateWeaponCharges(float delta) {
@@ -908,7 +1098,7 @@ public class ShipScreenNew extends GameScreen {
                     .filter(r -> r.getType() == RoomType.WEAPONS)
                     .findFirst()
                     .orElse(null);
-            
+
             if (weaponRoom != null && weaponRoom.getPowerLevel() >= weapon.getPowerRequired()) {
                 weapon.charge(1); // Charge 1 per second
             }
@@ -917,27 +1107,27 @@ public class ShipScreenNew extends GameScreen {
 
     private void fireWeaponAtTarget(Weapon weapon, Room targetRoom, Ship enemyShip) {
         CombatState combatState = game.getGameState().getCombatState();
-        
+
         int damage = weapon.getDamage();
-        
+
         // Check shields
         if (combatState.getEnemyShields() > 0) {
             int shieldDamage = Math.min(damage, combatState.getEnemyShields());
             combatState.setEnemyShields(combatState.getEnemyShields() - shieldDamage);
             damage -= shieldDamage;
         }
-        
+
         // Apply hull damage
         if (damage > 0) {
             enemyShip.setCurrentHull(enemyShip.getCurrentHull() - damage);
             targetRoom.setHealth(targetRoom.getHealth() - damage);
-            
+
             // Chance for fire/breach
             if (Math.random() < 0.2) {
                 targetRoom.setFire(true);
             }
         }
-        
+
         weapon.fire();
         updateEnemyShipGrid();
     }

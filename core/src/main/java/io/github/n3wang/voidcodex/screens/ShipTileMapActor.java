@@ -183,10 +183,20 @@ public class ShipTileMapActor extends Actor {
                 // Y=0 is at bottom, so render normally
                 float tileYPos = tileStartY + (tileY * roomTileSize);
                 
-                // Draw tile background - use a semi-transparent overlay so room shows through
-                // Make it lighter and more transparent so the room texture is visible
-                batch.setColor(0.5f, 0.5f, 0.6f, alpha * 0.2f); // Very transparent
+                // Draw tile background based on oxygen level
+                float oxygenLevel = room.getTileOxygen(tileX, tileY);
                 Texture tileBgTexture = PixelArtGenerator.generateRoomSprite(RoomType.EMPTY);
+                
+                // Color based on oxygen: white/grey when full (1.0), red when empty (0.0)
+                if (oxygenLevel > 0.5f) {
+                    // Full/high oxygen - white/greyish
+                    float grey = 0.7f + (oxygenLevel - 0.5f) * 0.6f; // 0.7 to 1.0
+                    batch.setColor(grey, grey, grey, alpha * 0.8f);
+                } else {
+                    // Low/no oxygen - red
+                    float red = 0.5f + oxygenLevel; // 0.5 to 1.0
+                    batch.setColor(red, 0.2f, 0.2f, alpha * 0.8f);
+                }
                 batch.draw(tileBgTexture, tileXPos, tileYPos, roomTileSize, roomTileSize);
                 
                 // Draw tile border - make it subtle

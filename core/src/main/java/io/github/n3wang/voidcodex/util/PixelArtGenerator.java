@@ -486,5 +486,96 @@ public class PixelArtGenerator {
         }
         cachedTextures.clear();
     }
+    
+    /**
+     * Generate an icon for a room/system type.
+     * Returns a small icon (16x16 or 24x24) representing the system.
+     */
+    public static Texture generateSystemIcon(RoomType type) {
+        String key = "icon_" + type.name();
+        if (cachedTextures.containsKey(key)) {
+            return cachedTextures.get(key);
+        }
+        
+        int iconSize = 24;
+        Pixmap pixmap = new Pixmap(iconSize, iconSize, Pixmap.Format.RGBA8888);
+        // Clear with transparent background
+        pixmap.setColor(0f, 0f, 0f, 0f);
+        pixmap.fill();
+        pixmap.setColor(1f, 1f, 1f, 1f); // White icon
+        
+        // Draw icon based on room type
+        switch (type) {
+            case BRIDGE:
+                // Crescent moon / C-shape pointing right
+                pixmap.fillCircle(iconSize / 2, iconSize / 2, iconSize / 2 - 2);
+                pixmap.setColor(0f, 0f, 0f, 0f); // Transparent to create crescent
+                pixmap.fillCircle(iconSize / 2 - 2, iconSize / 2, iconSize / 2 - 4);
+                pixmap.setColor(1f, 1f, 1f, 1f); // Reset to white
+                break;
+            case SHIELDS:
+                // Flashlight beam / spotlight
+                pixmap.fillRectangle(iconSize / 2 - 2, 0, 4, iconSize);
+                // Triangle for beam
+                for (int y = iconSize - 6; y < iconSize; y++) {
+                    int width = (iconSize - y) * 2;
+                    pixmap.fillRectangle(iconSize / 2 - width / 2, y, width, 1);
+                }
+                break;
+            case WEAPONS:
+                // Spaceship / fighter jet pointing up
+                // Triangle body
+                for (int y = 0; y < iconSize - 4; y++) {
+                    int width = (iconSize - 4 - y) / 2;
+                    if (width > 0) {
+                        pixmap.fillRectangle(iconSize / 2 - width, y, width * 2, 1);
+                    }
+                }
+                // Bottom rectangle
+                pixmap.fillRectangle(iconSize / 2 - 2, iconSize - 8, 4, 4);
+                break;
+            case ENGINES:
+                // Arrow pointing right
+                // Arrow body
+                pixmap.fillRectangle(4, iconSize / 2 - 2, iconSize - 8, 4);
+                // Arrow head
+                for (int y = 0; y < 8; y++) {
+                    int offset = y;
+                    pixmap.fillRectangle(iconSize - 8 + offset, iconSize / 2 - 4 + y, 8 - offset, 1);
+                }
+                break;
+            case MEDBAY:
+                // Cross / medical symbol
+                pixmap.fillRectangle(iconSize / 2 - 1, 2, 2, iconSize - 4);
+                pixmap.fillRectangle(2, iconSize / 2 - 1, iconSize - 4, 2);
+                break;
+            case OXYGEN:
+                // Circle with dots (oxygen molecule)
+                pixmap.drawCircle(iconSize / 2, iconSize / 2, iconSize / 3);
+                pixmap.fillCircle(iconSize / 2 - 4, iconSize / 2, 2);
+                pixmap.fillCircle(iconSize / 2 + 4, iconSize / 2, 2);
+                break;
+            case SENSORS:
+                // Radar waves / sonar pulse
+                pixmap.drawCircle(iconSize / 2, iconSize / 2, iconSize / 3);
+                pixmap.drawCircle(iconSize / 2, iconSize / 2, iconSize / 2 - 2);
+                pixmap.fillCircle(iconSize / 2, iconSize / 2, 2);
+                break;
+            case DOORS:
+                // Q shape / circular symbol
+                pixmap.drawCircle(iconSize / 2, iconSize / 2, iconSize / 3);
+                pixmap.fillRectangle(iconSize / 2 + 2, iconSize / 2 + 2, 4, 4);
+                break;
+            default:
+                // Default: square
+                pixmap.fillRectangle(4, 4, iconSize - 8, iconSize - 8);
+                break;
+        }
+        
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+        cachedTextures.put(key, texture);
+        return texture;
+    }
 }
 
