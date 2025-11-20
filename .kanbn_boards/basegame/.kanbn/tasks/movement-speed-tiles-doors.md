@@ -1,10 +1,11 @@
 ---
 created: 2025-11-20T01:48:50.783Z
-updated: 2025-11-20T04:01:38.093Z
+updated: 2025-11-20T11:05:50.072Z
 assigned: ""
 progress: 0
 tags: []
 started: 2025-11-19T00:00:00.000Z
+completed: 2025-11-20T11:05:50.072Z
 ---
 
 # Movement Speed, tiles, doors.

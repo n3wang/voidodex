@@ -15,6 +15,8 @@ completedColumns:
 
 ## In Progress
 
-- [movement-speed-tiles-doors](tasks/movement-speed-tiles-doors.md)
+- [ship-systems](tasks/ship-systems.md)
 
 ## Done
+
+- [movement-speed-tiles-doors](tasks/movement-speed-tiles-doors.md)
