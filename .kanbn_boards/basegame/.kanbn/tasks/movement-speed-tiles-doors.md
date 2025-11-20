@@ -1,6 +1,6 @@
 ---
 created: 2025-11-20T01:48:50.783Z
-updated: 2025-11-20T02:26:55.033Z
+updated: 2025-11-20T04:01:38.093Z
 assigned: ""
 progress: 0
 tags: []
@@ -13,5 +13,6 @@ Movement speed and doors features
 
 ## Sub-tasks
 
-- [ ] selecting the profile square also works not needs , or make the
-- [ ] by default the rooms are 4x4 tiles that can be selectable and moved, only one character fits per tile
+- [x] selecting the profile square also works not needs , or make the
+- [x] by default the rooms are 4x4 tiles that can be selectable and moved, only one character fits per tile
+- [ ] modify into tiles based

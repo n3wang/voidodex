@@ -5,7 +5,9 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -27,7 +29,8 @@ public class ShipScreenNew extends GameScreen {
     private Table mainTable;
     private Table topBar;
     private Table leftPanel; // Crew portraits
-    private Table centerPanel; // Player ship grid
+    private Table centerPanel; // Player ship grid container
+    private ShipTileMapActor shipTileMap; // Tile-based ship rendering
     private Table rightPanel; // Enemy ship grid (combat)
     private Table bottomPanel; // Weapons and systems
     
@@ -79,12 +82,26 @@ public class ShipScreenNew extends GameScreen {
         
         // Update UI
         updateTopBar();
+        
+        // Update tile map position (in case UI moved) - only update position, not create
+        if (shipTileMap != null && centerPanel != null) {
+            centerPanel.layout();
+            // Convert centerPanel coordinates to stage coordinates
+            Vector2 stagePos = centerPanel.localToStageCoordinates(new Vector2(0, 0));
+            float mapX = stagePos.x + 10; // Padding from left edge of centerPanel
+            float mapY = stagePos.y + 40; // Below title
+            shipTileMap.setPosition(mapX, mapY);
+            shipTileMap.toFront(); // Keep it on top for input
+        }
     }
     
     /**
      * Handle crew selection logic
      */
     private void handleCrewSelection(Crew crew) {
+        // Debug: log selection
+        Gdx.app.log("ShipScreen", "Selecting crew: " + crew.getName());
+        
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
             // Shift-right-click: toggle selection
             if (selectedCrew.contains(crew)) {
@@ -106,19 +123,19 @@ public class ShipScreenNew extends GameScreen {
     }
     
     /**
-     * Handle tile click - RIGHT CLICK = SELECT, LEFT CLICK = MOVE
+     * Handle tile click - LEFT CLICK = SELECT, RIGHT CLICK = MOVE
      */
     private void handleTileClick(Room room, int tileX, int tileY, int button) {
         Ship ship = game.getGameState().getCurrentShip();
         Crew crewAtTile = room.getCrewAtTile(tileX, tileY);
         
-        if (button == Input.Buttons.RIGHT) {
-            // RIGHT CLICK: Select crew at tile
+        if (button == Input.Buttons.LEFT) {
+            // LEFT CLICK: Select crew at tile
             if (crewAtTile != null) {
                 handleCrewSelection(crewAtTile);
             }
-        } else if (button == Input.Buttons.LEFT) {
-            // LEFT CLICK: Move selected crew to this tile
+        } else if (button == Input.Buttons.RIGHT) {
+            // RIGHT CLICK: Move selected crew to this tile
             if (!selectedCrew.isEmpty() && room.getType() != RoomType.EMPTY) {
                 // Check if tile is empty
                 if (crewAtTile == null) {
@@ -257,6 +274,8 @@ public class ShipScreenNew extends GameScreen {
         mainTable = new Table();
         mainTable.setFillParent(true);
         mainTable.pad(5f);
+        // Make sure mainTable doesn't block input to child actors
+        mainTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.childrenOnly);
 
         // Top Bar
         createTopBar();
@@ -287,6 +306,9 @@ public class ShipScreenNew extends GameScreen {
 
         stage.addActor(mainTable);
         setupKeyboardInput();
+        
+        // Create tile map after UI is set up
+        updateShipGrid();
     }
 
     private void createTopBar() {
@@ -522,25 +544,16 @@ public class ShipScreenNew extends GameScreen {
         healthBar.setWidth(120f);
         portrait.add(healthBar).left().padTop(3f).row();
 
-        // Make clickable - RIGHT CLICK = SELECT
-        portrait.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // clicked() is typically called for left clicks, but check button anyway
-                if (event.getButton() == Input.Buttons.RIGHT) {
-                    handleCrewSelection(crew);
-                }
-            }
-            
+        // Make clickable - LEFT CLICK = SELECT
+        portrait.addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                // Handle right click in touchDown (this is more reliable for right clicks)
-                if (button == Input.Buttons.RIGHT) {
+                // Handle left click for selection
+                if (button == Input.Buttons.LEFT) {
                     handleCrewSelection(crew);
-                    return true; // Consume right click
+                    return true; // Consume left click
                 }
-                // For left clicks, return false so clicked() can handle it
-                return super.touchDown(event, x, y, pointer, button);
+                return false; // Don't consume right clicks
             }
         });
 
@@ -555,137 +568,81 @@ public class ShipScreenNew extends GameScreen {
         Label title = new Label("YOUR SHIP", game.getSkin(), "subtitle");
         centerPanel.add(title).padBottom(10f).row();
 
-        updateShipGrid();
+        // Create placeholder for tile map (will be added to stage separately)
+        Ship ship = game.getGameState().getCurrentShip();
+        // Don't add a placeholder - the tile map actor will be added directly to stage
+        // Just add empty space to reserve the area
+        centerPanel.add().size(ship.getGridWidth() * 60f, ship.getGridHeight() * 60f);
+        
+        // Don't create tile map here - it will be created after UI is laid out
     }
 
     private void updateShipGrid() {
-        centerPanel.clearChildren();
-        Label title = new Label("YOUR SHIP", game.getSkin(), "subtitle");
-        centerPanel.add(title).padBottom(10f).row();
-
         Ship ship = game.getGameState().getCurrentShip();
-        Table grid = new Table();
-
-        for (int y = 0; y < ship.getGridHeight(); y++) {
-            for (int x = 0; x < ship.getGridWidth(); x++) {
-                Room room = ship.getRoom(x, y);
-                if (room != null) {
-                    Button roomButton = createRoomButton(room, ship);
-                    grid.add(roomButton).size(120f, 120f).pad(2f); // Larger rooms
-                } else {
-                    Table empty = new Table();
-                    empty.setBackground(game.getDrawable("default-round"));
-                    grid.add(empty).size(120f, 120f).pad(2f);
-                }
+        
+        // Create or update tile-based ship map
+        if (shipTileMap == null) {
+            shipTileMap = new ShipTileMapActor(ship, selectedCrew, (roomX, roomY, tileX, tileY, button) -> {
+                handleTileMapClick(roomX, roomY, tileX, tileY, button);
+            });
+            
+            // Position it to match the center panel's map placeholder
+            // We'll position it after the UI is laid out
+            if (centerPanel != null) {
+                centerPanel.layout(); // Force layout
+                // Convert centerPanel coordinates to stage coordinates
+                Vector2 stagePos = centerPanel.localToStageCoordinates(new Vector2(0, 0));
+                // Position map below the title (title is ~30px high, plus 10px padding)
+                float mapX = stagePos.x + 10; // Padding from left edge of centerPanel
+                float mapY = stagePos.y + 40; // Below title (30px title + 10px padding)
+                shipTileMap.setPosition(mapX, mapY);
             }
-            grid.row();
+            
+            // Add directly to stage so it can receive input
+            // Add it on top of other actors so it receives input first
+            stage.addActor(shipTileMap);
+            
+            // Make sure it's touchable and visible
+            shipTileMap.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
+            shipTileMap.setVisible(true);
+            
+            // Bring to front AFTER setting touchable - this ensures it's on top
+            shipTileMap.toFront();
+        } else {
+            shipTileMap.setShip(ship);
+            shipTileMap.setSelectedCrew(selectedCrew);
         }
-
-        centerPanel.add(grid);
+    }
+    
+    /**
+     * Handle clicks on the tile map
+     */
+    private void handleTileMapClick(int roomX, int roomY, int tileX, int tileY, int button) {
+        Ship ship = game.getGameState().getCurrentShip();
+        Room room = ship.getRoom(roomX, roomY);
+        
+        if (room == null || room.getType() == RoomType.EMPTY) {
+            return;
+        }
+        
+        if (tileX < 0 || tileY < 0) {
+            // Clicked on room but not on a specific tile - allow selection of crew in room
+            // Find first crew in this room and select them
+            List<Crew> crewInRoom = ship.getCrew().stream()
+                    .filter(c -> c.getCurrentRoomX() == roomX && c.getCurrentRoomY() == roomY)
+                    .filter(c -> !c.isMoving())
+                    .toList();
+            if (!crewInRoom.isEmpty() && button == Input.Buttons.LEFT) {
+                handleCrewSelection(crewInRoom.get(0));
+            }
+            return;
+        }
+        
+        // Use existing tile click handler
+        handleTileClick(room, tileX, tileY, button);
     }
 
-    private Button createRoomButton(final Room room, Ship ship) {
-        Table roomTable = new Table();
-        
-        // Use pixel art sprite for room background
-        Texture roomTexture = PixelArtGenerator.generateRoomSprite(room.getType());
-        TextureRegion region = new TextureRegion(roomTexture);
-        roomTable.setBackground(new com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable(region));
-        
-        if (room.getHealth() < room.getMaxHealth() * 0.5f) {
-            roomTable.setColor(Color.RED); // Damaged - tint red
-        }
-
-        // Room type
-        Label typeLabel = new Label(room.getType().getDisplayName(), game.getSkin());
-        typeLabel.setFontScale(0.5f);
-        typeLabel.setAlignment(Align.center);
-        roomTable.add(typeLabel).row();
-
-        // Power level
-        if (room.getMaxPower() > 0) {
-            Label powerLabel = new Label("P:" + room.getPowerLevel() + "/" + room.getMaxPower(), game.getSkin());
-            powerLabel.setFontScale(0.5f);
-            roomTable.add(powerLabel).row();
-        }
-
-        // Health
-        Label healthLabel = new Label("H:" + room.getHealth(), game.getSkin());
-        healthLabel.setFontScale(0.5f);
-        roomTable.add(healthLabel).row();
-
-        // Hazards - use pixel art sprites
-        if (room.hasFire()) {
-            Image fireImage = new Image(new TextureRegion(PixelArtGenerator.generateFireSprite()));
-            fireImage.setSize(20f, 20f);
-            roomTable.add(fireImage).row();
-        }
-        if (room.hasBreach()) {
-            Image breachImage = new Image(new TextureRegion(PixelArtGenerator.generateBreachSprite()));
-            breachImage.setSize(20f, 20f);
-            roomTable.add(breachImage).row();
-        }
-
-        // Crew indicator - show 2x2 grid of tiles with crew (clickable tiles)
-        Table tileGrid = new Table();
-        for (int tileY = 0; tileY < 2; tileY++) {
-            for (int tileX = 0; tileX < 2; tileX++) {
-                final int finalTileX = tileX;
-                final int finalTileY = tileY;
-                Crew crewAtTile = room.getCrewAtTile(tileX, tileY);
-                
-                Table tileCell = new Table();
-                tileCell.setBackground(game.getDrawable("default-round"));
-                tileCell.setColor(Color.DARK_GRAY);
-                
-                if (crewAtTile != null) {
-                    int crewIndex = ship.getCrew().indexOf(crewAtTile);
-                    Texture crewTexture = PixelArtGenerator.generateCrewSprite(crewIndex);
-                    Image crewImage = new Image(new TextureRegion(crewTexture));
-                    crewImage.setSize(12f, 12f);
-                    if (selectedCrew.contains(crewAtTile)) {
-                        crewImage.setColor(Color.YELLOW); // Highlight selected
-                        tileCell.setColor(Color.YELLOW);
-                    }
-                    tileCell.add(crewImage).size(12f, 12f);
-                }
-                
-                // Make each tile clickable
-                Button tileButton = new Button(tileCell, game.getSkin());
-                tileButton.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        // clicked() is typically called for left clicks
-                        // Default to left button if not set
-                        int button = event.getButton();
-                        if (button == -1) {
-                            button = Input.Buttons.LEFT; // Default to left if not set
-                        }
-                        handleTileClick(room, finalTileX, finalTileY, button);
-                    }
-                    
-                    @Override
-                    public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                        // Handle right click in touchDown (more reliable for right clicks)
-                        if (button == Input.Buttons.RIGHT) {
-                            handleTileClick(room, finalTileX, finalTileY, Input.Buttons.RIGHT);
-                            return true; // Consume right click
-                        }
-                        // For left clicks, return false so clicked() can handle it
-                        return super.touchDown(event, x, y, pointer, button);
-                    }
-                });
-                
-                tileGrid.add(tileButton).size(12f, 12f).pad(1f);
-            }
-            tileGrid.row();
-        }
-        roomTable.add(tileGrid).row();
-
-        Button button = new Button(roomTable, game.getSkin());
-
-        return button;
-    }
+    // createRoomButton removed - now using tile-based rendering
 
     private void createRightPanel() {
         rightPanel = new Table();
