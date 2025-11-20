@@ -9,12 +9,12 @@ completedColumns:
 
 ## Backlog
 
-- [combat-movements](tasks/combat-movements.md)
-
 ## Todo
 
-- [movement-speed-tiles-doors](tasks/movement-speed-tiles-doors.md)
+- [combat-movements](tasks/combat-movements.md)
 
 ## In Progress
+
+- [movement-speed-tiles-doors](tasks/movement-speed-tiles-doors.md)
 
 ## Done

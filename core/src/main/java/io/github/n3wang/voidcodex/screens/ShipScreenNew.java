@@ -14,6 +14,7 @@ import io.github.n3wang.voidcodex.VoidCodexGame;
 import io.github.n3wang.voidcodex.model.*;
 import io.github.n3wang.voidcodex.util.PixelArtGenerator;
 import io.github.n3wang.voidcodex.util.Pathfinding;
+import io.github.n3wang.voidcodex.util.TilePathfinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,111 @@ public class ShipScreenNew extends GameScreen {
         updateTopBar();
     }
     
+    /**
+     * Handle crew selection logic
+     */
+    private void handleCrewSelection(Crew crew) {
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            // Shift-right-click: toggle selection
+            if (selectedCrew.contains(crew)) {
+                selectedCrew.remove(crew);
+            } else {
+                selectedCrew.add(crew);
+            }
+        } else {
+            // Regular right-click: single select
+            if (selectedCrew.contains(crew) && selectedCrew.size() == 1) {
+                selectedCrew.clear(); // Deselect if already selected
+            } else {
+                selectedCrew.clear();
+                selectedCrew.add(crew);
+            }
+        }
+        updateCrewPortraits();
+        updateShipGrid(); // Update ship grid to show selected crew
+    }
+    
+    /**
+     * Handle tile click - RIGHT CLICK = SELECT, LEFT CLICK = MOVE
+     */
+    private void handleTileClick(Room room, int tileX, int tileY, int button) {
+        Ship ship = game.getGameState().getCurrentShip();
+        Crew crewAtTile = room.getCrewAtTile(tileX, tileY);
+        
+        if (button == Input.Buttons.RIGHT) {
+            // RIGHT CLICK: Select crew at tile
+            if (crewAtTile != null) {
+                handleCrewSelection(crewAtTile);
+            }
+        } else if (button == Input.Buttons.LEFT) {
+            // LEFT CLICK: Move selected crew to this tile
+            if (!selectedCrew.isEmpty() && room.getType() != RoomType.EMPTY) {
+                // Check if tile is empty
+                if (crewAtTile == null) {
+                    // Check if any selected crew is moving
+                    boolean anyMoving = selectedCrew.stream().anyMatch(Crew::isMoving);
+                    
+                    if (!anyMoving) {
+                        // Move first selected crew to this tile
+                        Crew crew = selectedCrew.get(0);
+                        
+                        // Remove crew from current tile (but don't remove from room yet - let movement handle it)
+                        Room currentRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
+                        
+                        // Use tile-based pathfinding
+                        List<int[]> path = TilePathfinding.findPath(ship,
+                                crew.getCurrentRoomX(), crew.getCurrentRoomY(), 
+                                crew.getCurrentTileX(), crew.getCurrentTileY(),
+                                room.getX(), room.getY(), tileX, tileY);
+                        
+                        if (!path.isEmpty()) {
+                            // Remove from current tile before starting movement
+                            if (currentRoom != null) {
+                                currentRoom.removeCrewFromTile(crew.getCurrentTileX(), crew.getCurrentTileY());
+                            }
+                            
+                            // Set target and start movement
+                            crew.setTargetRoomX(room.getX());
+                            crew.setTargetRoomY(room.getY());
+                            crew.setTargetTileX(tileX);
+                            crew.setTargetTileY(tileY);
+                            crew.setMoving(true);
+                            crew.setMovementProgress(0.0f);
+                            
+                            // Set first step in path
+                            int[] firstStep = path.get(0);
+                            crew.setNextRoomX(firstStep[0]);
+                            crew.setNextRoomY(firstStep[1]);
+                            crew.setNextTileX(firstStep[2]);
+                            crew.setNextTileY(firstStep[3]);
+                            
+                            updateCrewPortraits();
+                            updateShipGrid();
+                        } else {
+                            // Path blocked, place crew directly if same room and adjacent tile
+                            if (crew.getCurrentRoomX() == room.getX() && 
+                                crew.getCurrentRoomY() == room.getY()) {
+                                // Check if it's an adjacent tile (horizontal or vertical only)
+                                int dx = Math.abs(crew.getCurrentTileX() - tileX);
+                                int dy = Math.abs(crew.getCurrentTileY() - tileY);
+                                if ((dx == 1 && dy == 0) || (dx == 0 && dy == 1)) {
+                                    // Adjacent tile, move directly
+                                    if (currentRoom != null) {
+                                        currentRoom.removeCrewFromTile(crew.getCurrentTileX(), crew.getCurrentTileY());
+                                    }
+                                    room.setCrewAtTile(tileX, tileY, crew);
+                                    crew.setCurrentTileX(tileX);
+                                    crew.setCurrentTileY(tileY);
+                                    updateShipGrid();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     private void updateCrewMovement(float delta) {
         Ship ship = game.getGameState().getCurrentShip();
         boolean needsUpdate = false;
@@ -90,27 +196,48 @@ public class ShipScreenNew extends GameScreen {
                 crew.setMovementProgress(crew.getMovementProgress() + crew.getMovementSpeed() * delta);
                 
                 if (crew.getMovementProgress() >= 1.0f) {
-                    // Reached next room in path
+                    // Reached next tile in path
+                    Room currentRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
+                    if (currentRoom != null) {
+                        // Remove from current tile
+                        currentRoom.removeCrewFromTile(crew.getCurrentTileX(), crew.getCurrentTileY());
+                    }
+                    
+                    // Move to next tile
                     crew.setCurrentRoomX(crew.getNextRoomX());
                     crew.setCurrentRoomY(crew.getNextRoomY());
+                    crew.setCurrentTileX(crew.getNextTileX());
+                    crew.setCurrentTileY(crew.getNextTileY());
                     crew.setMovementProgress(0.0f);
+                    
+                    // Place crew in new tile
+                    Room nextRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
+                    if (nextRoom != null) {
+                        nextRoom.setCrewAtTile(crew.getCurrentTileX(), crew.getCurrentTileY(), crew);
+                    }
                     
                     // Check if reached final destination
                     if (crew.getCurrentRoomX() == crew.getTargetRoomX() && 
-                        crew.getCurrentRoomY() == crew.getTargetRoomY()) {
-                        // Reached destination, assign quarter position
+                        crew.getCurrentRoomY() == crew.getTargetRoomY() &&
+                        crew.getCurrentTileX() == crew.getTargetTileX() &&
+                        crew.getCurrentTileY() == crew.getTargetTileY()) {
+                        // Reached destination
                         crew.setMoving(false);
                         needsUpdate = true;
                     } else {
-                        // Continue to next room in path
-                        List<int[]> path = Pathfinding.findPath(ship,
+                        // Continue to next tile in path
+                        List<int[]> path = TilePathfinding.findPath(ship,
                                 crew.getCurrentRoomX(), crew.getCurrentRoomY(),
-                                crew.getTargetRoomX(), crew.getTargetRoomY());
+                                crew.getCurrentTileX(), crew.getCurrentTileY(),
+                                crew.getTargetRoomX(), crew.getTargetRoomY(),
+                                crew.getTargetTileX(), crew.getTargetTileY());
                         
                         if (!path.isEmpty()) {
                             int[] nextStep = path.get(0);
                             crew.setNextRoomX(nextStep[0]);
                             crew.setNextRoomY(nextStep[1]);
+                            crew.setNextTileX(nextStep[2]);
+                            crew.setNextTileY(nextStep[3]);
                         } else {
                             // Path blocked, stop movement
                             crew.setMoving(false);
@@ -350,8 +477,11 @@ public class ShipScreenNew extends GameScreen {
 
         Ship ship = game.getGameState().getCurrentShip();
         for (Crew crew : ship.getCrew()) {
-            Table portrait = createCrewPortrait(crew);
-            leftPanel.add(portrait).fillX().padBottom(3f).row();
+            // Only show crew that are in a room (not moving between rooms)
+            if (!crew.isMoving() || ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY()) != null) {
+                Table portrait = createCrewPortrait(crew);
+                leftPanel.add(portrait).fillX().padBottom(3f).row();
+            }
         }
     }
 
@@ -392,31 +522,25 @@ public class ShipScreenNew extends GameScreen {
         healthBar.setWidth(120f);
         portrait.add(healthBar).left().padTop(3f).row();
 
-        // Make clickable - LEFT CLICK = SELECT
+        // Make clickable - RIGHT CLICK = SELECT
         portrait.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // Only handle left clicks for selection
-                if (event.getButton() == Input.Buttons.LEFT) {
-                    if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                        // Shift-left-click: toggle selection
-                        if (selectedCrew.contains(crew)) {
-                            selectedCrew.remove(crew);
-                        } else {
-                            selectedCrew.add(crew);
-                        }
-                    } else {
-                        // Regular left-click: single select
-                        if (selectedCrew.contains(crew) && selectedCrew.size() == 1) {
-                            selectedCrew.clear(); // Deselect if already selected
-                        } else {
-                            selectedCrew.clear();
-                            selectedCrew.add(crew);
-                        }
-                    }
-                    updateCrewPortraits();
-                    updateShipGrid(); // Update ship grid to show selected crew
+                // clicked() is typically called for left clicks, but check button anyway
+                if (event.getButton() == Input.Buttons.RIGHT) {
+                    handleCrewSelection(crew);
                 }
+            }
+            
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                // Handle right click in touchDown (this is more reliable for right clicks)
+                if (button == Input.Buttons.RIGHT) {
+                    handleCrewSelection(crew);
+                    return true; // Consume right click
+                }
+                // For left clicks, return false so clicked() can handle it
+                return super.touchDown(event, x, y, pointer, button);
             }
         });
 
@@ -460,7 +584,7 @@ public class ShipScreenNew extends GameScreen {
         centerPanel.add(grid);
     }
 
-    private Button createRoomButton(Room room, Ship ship) {
+    private Button createRoomButton(final Room room, Ship ship) {
         Table roomTable = new Table();
         
         // Use pixel art sprite for room background
@@ -502,218 +626,63 @@ public class ShipScreenNew extends GameScreen {
             roomTable.add(breachImage).row();
         }
 
-        // Crew indicator - show crew sprites in quarters (max 4 crew per room)
-        List<Crew> crewInRoom = ship.getCrew().stream()
-                .filter(c -> c.getCurrentRoomX() == room.getX() && c.getCurrentRoomY() == room.getY())
-                .limit(4) // Max 4 crew per room
-                .toList();
-        
-        // Create a 2x2 grid for crew positions (quarters)
-        Table crewGrid = new Table();
-        for (int quarter = 0; quarter < 4; quarter++) {
-            final int quarterPos = quarter;
-            Crew crewInQuarter = crewInRoom.stream()
-                    .filter(c -> c.getQuarterPosition() == quarterPos)
-                    .findFirst()
-                    .orElse(null);
-            
-            if (crewInQuarter != null) {
-                int crewIndex = ship.getCrew().indexOf(crewInQuarter);
-                Texture crewTexture = PixelArtGenerator.generateCrewSprite(crewIndex);
-                Image crewImage = new Image(new TextureRegion(crewTexture));
-                crewImage.setSize(20f, 20f);
-                if (selectedCrew.contains(crewInQuarter)) {
-                    crewImage.setColor(Color.YELLOW); // Highlight selected
+        // Crew indicator - show 2x2 grid of tiles with crew (clickable tiles)
+        Table tileGrid = new Table();
+        for (int tileY = 0; tileY < 2; tileY++) {
+            for (int tileX = 0; tileX < 2; tileX++) {
+                final int finalTileX = tileX;
+                final int finalTileY = tileY;
+                Crew crewAtTile = room.getCrewAtTile(tileX, tileY);
+                
+                Table tileCell = new Table();
+                tileCell.setBackground(game.getDrawable("default-round"));
+                tileCell.setColor(Color.DARK_GRAY);
+                
+                if (crewAtTile != null) {
+                    int crewIndex = ship.getCrew().indexOf(crewAtTile);
+                    Texture crewTexture = PixelArtGenerator.generateCrewSprite(crewIndex);
+                    Image crewImage = new Image(new TextureRegion(crewTexture));
+                    crewImage.setSize(12f, 12f);
+                    if (selectedCrew.contains(crewAtTile)) {
+                        crewImage.setColor(Color.YELLOW); // Highlight selected
+                        tileCell.setColor(Color.YELLOW);
+                    }
+                    tileCell.add(crewImage).size(12f, 12f);
                 }
-                crewGrid.add(crewImage).size(20f, 20f).pad(2f);
-            } else {
-                // Empty quarter
-                Table emptyQuarter = new Table();
-                crewGrid.add(emptyQuarter).size(20f, 20f).pad(2f);
-            }
-            
-            // New row after every 2 quarters (top row: 0,1 bottom row: 2,3)
-            if (quarter == 1) {
-                crewGrid.row();
-            }
-        }
-        roomTable.add(crewGrid).row();
-
-        Button button = new Button(roomTable, game.getSkin());
-        
-        // Handle clicks - LEFT CLICK = SELECT, RIGHT CLICK = MOVE/ACTION
-        final List<Crew> crewInRoomFinal = new ArrayList<>(crewInRoom);
-        final Room roomFinal = room;
-        button.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // Handle left click for selection or movement
-                if (event.getButton() == Input.Buttons.LEFT) {
-                    // If crew is selected and moving, clicking a room should move them
-                    if (!selectedCrew.isEmpty() && roomFinal.getType() != RoomType.EMPTY) {
-                        // Check if any selected crew is moving
-                        boolean anyMoving = selectedCrew.stream().anyMatch(Crew::isMoving);
-                        
-                        if (!anyMoving) {
-                            // No crew moving, check if room has space and move them
-                            List<Crew> currentCrewInRoom = ship.getCrew().stream()
-                                    .filter(c -> c.getCurrentRoomX() == roomFinal.getX() && 
-                                                c.getCurrentRoomY() == roomFinal.getY())
-                                    .toList();
-                            
-                            int availableSpots = 4 - currentCrewInRoom.size();
-                            if (availableSpots > 0) {
-                                int crewToMove = Math.min(selectedCrew.size(), availableSpots);
-                                
-                                // Move crew to available quarters
-                                int moved = 0;
-                                for (Crew crew : selectedCrew) {
-                                    if (moved >= crewToMove) break;
-                                    
-                                    // Find an available quarter (0-3)
-                                    int availableQuarter = -1;
-                                    for (int q = 0; q < 4; q++) {
-                                        final int quarter = q;
-                                        boolean quarterOccupied = currentCrewInRoom.stream()
-                                                .anyMatch(c -> c.getQuarterPosition() == quarter);
-                                        if (!quarterOccupied) {
-                                            availableQuarter = quarter;
-                                            break;
-                                        }
-                                    }
-                                    
-                                    if (availableQuarter >= 0) {
-                                        // Use pathfinding to move crew
-                                        List<int[]> path = Pathfinding.findPath(ship, 
-                                                crew.getCurrentRoomX(), crew.getCurrentRoomY(),
-                                                roomFinal.getX(), roomFinal.getY());
-                                        
-                                        if (!path.isEmpty()) {
-                                            // Set target and start movement
-                                            crew.setTargetRoomX(roomFinal.getX());
-                                            crew.setTargetRoomY(roomFinal.getY());
-                                            crew.setMoving(true);
-                                            crew.setMovementProgress(0.0f);
-                                            
-                                            // Set first step in path
-                                            int[] firstStep = path.get(0);
-                                            crew.setNextRoomX(firstStep[0]);
-                                            crew.setNextRoomY(firstStep[1]);
-                                            
-                                            // Store quarter for when they arrive
-                                            crew.setQuarterPosition(availableQuarter);
-                                            moved++;
-                                            
-                                            // Update currentCrewInRoom for next iteration
-                                            currentCrewInRoom = ship.getCrew().stream()
-                                                    .filter(c -> c.getCurrentRoomX() == roomFinal.getX() && 
-                                                                c.getCurrentRoomY() == roomFinal.getY())
-                                                    .toList();
-                                        }
-                                    }
-                                }
-                                
-                                updateCrewPortraits();
-                                updateShipGrid();
-                                return;
-                            }
+                
+                // Make each tile clickable
+                Button tileButton = new Button(tileCell, game.getSkin());
+                tileButton.addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        // clicked() is typically called for left clicks
+                        // Default to left button if not set
+                        int button = event.getButton();
+                        if (button == -1) {
+                            button = Input.Buttons.LEFT; // Default to left if not set
                         }
+                        handleTileClick(room, finalTileX, finalTileY, button);
                     }
                     
-                    // LEFT CLICK: Select crew in room (if not moving them)
-                    if (!crewInRoomFinal.isEmpty()) {
-                        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
-                            // Shift-left-click: add to selection
-                            for (Crew crew : crewInRoomFinal) {
-                                if (!selectedCrew.contains(crew)) {
-                                    selectedCrew.add(crew);
-                                }
-                            }
-                        } else {
-                            // Regular left-click: select first crew in room
-                            selectedCrew.clear();
-                            selectedCrew.add(crewInRoomFinal.get(0));
+                    @Override
+                    public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                        // Handle right click in touchDown (more reliable for right clicks)
+                        if (button == Input.Buttons.RIGHT) {
+                            handleTileClick(room, finalTileX, finalTileY, Input.Buttons.RIGHT);
+                            return true; // Consume right click
                         }
-                        updateCrewPortraits();
-                        updateShipGrid();
+                        // For left clicks, return false so clicked() can handle it
+                        return super.touchDown(event, x, y, pointer, button);
                     }
-                }
+                });
+                
+                tileGrid.add(tileButton).size(12f, 12f).pad(1f);
             }
-            
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                // Handle right click for movement (button 1 = right mouse button)
-                if (button == 1) {
-                    // RIGHT CLICK: Move selected crew to this room (or action/attack)
-                    if (!selectedCrew.isEmpty() && roomFinal.getType() != RoomType.EMPTY) {
-                        // Check if room has space (max 4 crew)
-                        List<Crew> currentCrewInRoom = ship.getCrew().stream()
-                                .filter(c -> c.getCurrentRoomX() == roomFinal.getX() && 
-                                            c.getCurrentRoomY() == roomFinal.getY())
-                                .toList();
-                        
-                        int availableSpots = 4 - currentCrewInRoom.size();
-                        if (availableSpots > 0) {
-                            int crewToMove = Math.min(selectedCrew.size(), availableSpots);
-                            
-                            // Move crew to available quarters
-                            int moved = 0;
-                            for (Crew crew : selectedCrew) {
-                                if (moved >= crewToMove) break;
-                                
-                                // Find an available quarter (0-3)
-                                int availableQuarter = -1;
-                                for (int q = 0; q < 4; q++) {
-                                    final int quarter = q;
-                                    boolean quarterOccupied = currentCrewInRoom.stream()
-                                            .anyMatch(c -> c.getQuarterPosition() == quarter);
-                                    if (!quarterOccupied) {
-                                        availableQuarter = quarter;
-                                        break;
-                                    }
-                                }
-                                
-                                if (availableQuarter >= 0) {
-                                    // Use pathfinding to move crew
-                                    List<int[]> path = Pathfinding.findPath(ship, 
-                                            crew.getCurrentRoomX(), crew.getCurrentRoomY(),
-                                            roomFinal.getX(), roomFinal.getY());
-                                    
-                                    if (!path.isEmpty()) {
-                                        // Set target and start movement
-                                        crew.setTargetRoomX(roomFinal.getX());
-                                        crew.setTargetRoomY(roomFinal.getY());
-                                        crew.setMoving(true);
-                                        crew.setMovementProgress(0.0f);
-                                        
-                                        // Set first step in path
-                                        int[] firstStep = path.get(0);
-                                        crew.setNextRoomX(firstStep[0]);
-                                        crew.setNextRoomY(firstStep[1]);
-                                        
-                                        // Store path for this crew (we'll need to track it)
-                                        crew.setQuarterPosition(availableQuarter); // Store quarter for when they arrive
-                                        moved++;
-                                        
-                                        // Update currentCrewInRoom for next iteration
-                                        currentCrewInRoom = ship.getCrew().stream()
-                                                .filter(c -> c.getCurrentRoomX() == roomFinal.getX() && 
-                                                            c.getCurrentRoomY() == roomFinal.getY())
-                                                .toList();
-                                    }
-                                }
-                            }
-                            
-                            // Don't clear selection - allow multiple moves
-                            updateCrewPortraits();
-                            updateShipGrid();
-                        }
-                        return true; // Consume the event
-                    }
-                }
-                return super.touchDown(event, x, y, pointer, button);
-            }
-        });
+            tileGrid.row();
+        }
+        roomTable.add(tileGrid).row();
+
+        Button button = new Button(roomTable, game.getSkin());
 
         return button;
     }

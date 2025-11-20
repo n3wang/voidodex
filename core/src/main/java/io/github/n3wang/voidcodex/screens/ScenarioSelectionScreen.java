@@ -155,9 +155,22 @@ public class ScenarioSelectionScreen extends GameScreen {
         enemyShip.setShields(2);
         enemyShip.setMaxShields(3);
         
-        // Add enemy crew
-        enemyShip.addCrew(new io.github.n3wang.voidcodex.model.Crew("Enemy Captain", io.github.n3wang.voidcodex.model.CrewRole.CAPTAIN));
-        enemyShip.addCrew(new io.github.n3wang.voidcodex.model.Crew("Enemy Gunner", io.github.n3wang.voidcodex.model.CrewRole.SOLDIER));
+        // Add enemy crew and place them in tiles
+        io.github.n3wang.voidcodex.model.Crew enemyCaptain = new io.github.n3wang.voidcodex.model.Crew("Enemy Captain", io.github.n3wang.voidcodex.model.CrewRole.CAPTAIN);
+        enemyCaptain.setCurrentRoomX(0);
+        enemyCaptain.setCurrentRoomY(0);
+        enemyCaptain.setCurrentTileX(0);
+        enemyCaptain.setCurrentTileY(0);
+        enemyShip.addCrew(enemyCaptain);
+        enemyShip.getRoom(0, 0).setCrewAtTile(0, 0, enemyCaptain);
+        
+        io.github.n3wang.voidcodex.model.Crew enemyGunner = new io.github.n3wang.voidcodex.model.Crew("Enemy Gunner", io.github.n3wang.voidcodex.model.CrewRole.SOLDIER);
+        enemyGunner.setCurrentRoomX(0);
+        enemyGunner.setCurrentRoomY(0);
+        enemyGunner.setCurrentTileX(1);
+        enemyGunner.setCurrentTileY(0);
+        enemyShip.addCrew(enemyGunner);
+        enemyShip.getRoom(0, 0).setCrewAtTile(1, 0, enemyGunner);
         
         // Start combat
         game.getGameState().getCombatState().startCombat(playerShip, enemyShip);

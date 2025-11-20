@@ -58,9 +58,22 @@ public class Ship {
         ship.addRoom(new Room(1, 2, RoomType.DOORS));
         ship.addRoom(new Room(2, 2, RoomType.EMPTY));
         
-        // Add starter crew
-        ship.addCrew(new Crew("Captain", CrewRole.CAPTAIN));
-        ship.addCrew(new Crew("Engineer", CrewRole.ENGINEER));
+        // Add starter crew and place them in rooms
+        Crew captain = new Crew("Captain", CrewRole.CAPTAIN);
+        captain.setCurrentRoomX(0);
+        captain.setCurrentRoomY(0);
+        captain.setCurrentTileX(0);
+        captain.setCurrentTileY(0);
+        ship.addCrew(captain);
+        ship.getRoom(0, 0).setCrewAtTile(0, 0, captain);
+        
+        Crew engineer = new Crew("Engineer", CrewRole.ENGINEER);
+        engineer.setCurrentRoomX(0);
+        engineer.setCurrentRoomY(0);
+        engineer.setCurrentTileX(1);
+        engineer.setCurrentTileY(0);
+        ship.addCrew(engineer);
+        ship.getRoom(0, 0).setCrewAtTile(1, 0, engineer);
         
         // Add starter weapons
         ship.addWeapon(new Weapon("Basic Laser", WeaponType.LASER, 10, 1, 1));

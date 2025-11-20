@@ -9,19 +9,24 @@ import java.util.Map;
 public class Crew {
     private String name;
     private CrewRole role;
-    private int currentRoomX;
-    private int currentRoomY;
+    private int currentRoomX; // Room position on ship grid
+    private int currentRoomY; // Room position on ship grid
+    private int currentTileX; // Tile position within room (0-1)
+    private int currentTileY; // Tile position within room (0-1)
     private int health;
     private int maxHealth;
     private Map<Skill, Integer> skills; // Skill -> XP
     private boolean isMoving;
-    private int targetRoomX;
-    private int targetRoomY;
-    private int quarterPosition; // 0-3: top-left, top-right, bottom-left, bottom-right
+    private int targetRoomX; // Target room position
+    private int targetRoomY; // Target room position
+    private int targetTileX; // Target tile position within room (0-1)
+    private int targetTileY; // Target tile position within room (0-1)
     private float movementSpeed; // Tiles per second
-    private float movementProgress; // 0.0 to 1.0, progress to next room
+    private float movementProgress; // 0.0 to 1.0, progress to next tile
     private int nextRoomX; // Next room in path
     private int nextRoomY; // Next room in path
+    private int nextTileX; // Next tile in path (0-1)
+    private int nextTileY; // Next tile in path (0-1)
 
     public Crew(String name, CrewRole role) {
         this.name = name;
@@ -31,6 +36,8 @@ public class Crew {
         this.skills = new HashMap<>();
         this.currentRoomX = 0;
         this.currentRoomY = 0;
+        this.currentTileX = 0;
+        this.currentTileY = 0;
         this.isMoving = false;
         this.movementSpeed = 2.0f; // 2 tiles per second = 0.5 seconds per tile
         this.movementProgress = 0.0f;
@@ -68,6 +75,10 @@ public class Crew {
     public void setCurrentRoomX(int x) { this.currentRoomX = x; }
     public int getCurrentRoomY() { return currentRoomY; }
     public void setCurrentRoomY(int y) { this.currentRoomY = y; }
+    public int getCurrentTileX() { return currentTileX; }
+    public void setCurrentTileX(int x) { this.currentTileX = Math.max(0, Math.min(1, x)); }
+    public int getCurrentTileY() { return currentTileY; }
+    public void setCurrentTileY(int y) { this.currentTileY = Math.max(0, Math.min(1, y)); }
     public int getHealth() { return health; }
     public void setHealth(int health) { this.health = Math.max(0, Math.min(health, maxHealth)); }
     public int getMaxHealth() { return maxHealth; }
@@ -77,8 +88,14 @@ public class Crew {
     public void setTargetRoomX(int x) { this.targetRoomX = x; }
     public int getTargetRoomY() { return targetRoomY; }
     public void setTargetRoomY(int y) { this.targetRoomY = y; }
-    public int getQuarterPosition() { return quarterPosition; }
-    public void setQuarterPosition(int quarter) { this.quarterPosition = Math.max(0, Math.min(3, quarter)); }
+    public int getTargetTileX() { return targetTileX; }
+    public void setTargetTileX(int x) { this.targetTileX = Math.max(0, Math.min(1, x)); }
+    public int getTargetTileY() { return targetTileY; }
+    public void setTargetTileY(int y) { this.targetTileY = Math.max(0, Math.min(1, y)); }
+    @Deprecated
+    public int getQuarterPosition() { return 0; } // Deprecated - use tile positions instead
+    @Deprecated
+    public void setQuarterPosition(int quarter) { } // Deprecated - use tile positions instead
     public float getMovementSpeed() { return movementSpeed; }
     public void setMovementSpeed(float speed) { this.movementSpeed = Math.max(0.1f, speed); }
     public float getMovementProgress() { return movementProgress; }
@@ -87,6 +104,10 @@ public class Crew {
     public void setNextRoomX(int x) { this.nextRoomX = x; }
     public int getNextRoomY() { return nextRoomY; }
     public void setNextRoomY(int y) { this.nextRoomY = y; }
+    public int getNextTileX() { return nextTileX; }
+    public void setNextTileX(int x) { this.nextTileX = Math.max(0, Math.min(1, x)); }
+    public int getNextTileY() { return nextTileY; }
+    public void setNextTileY(int y) { this.nextTileY = Math.max(0, Math.min(1, y)); }
     public Map<Skill, Integer> getSkills() { return skills; }
     
     /**

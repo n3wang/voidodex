@@ -2,9 +2,10 @@ package io.github.n3wang.voidcodex.model;
 
 /**
  * Represents a room on the ship grid.
+ * Each room is a 2x2 grid of tiles, with one crew member per tile.
  */
 public class Room {
-    private int x, y;
+    private int x, y; // Room position on ship grid
     private RoomType type;
     private int powerLevel;
     private int maxPower;
@@ -13,6 +14,10 @@ public class Room {
     private boolean hasFire;
     private boolean hasBreach;
     private Crew assignedCrew;
+    
+    // 2x2 grid of tiles - each tile can hold one crew member
+    // tiles[tileX][tileY] = Crew at that tile position, or null if empty
+    private Crew[][] tiles;
 
     public Room(int x, int y, RoomType type) {
         this.x = x;
@@ -24,6 +29,62 @@ public class Room {
         this.health = maxHealth;
         this.hasFire = false;
         this.hasBreach = false;
+        this.tiles = new Crew[2][2]; // 2x2 grid of tiles
+    }
+    
+    /**
+     * Get crew at specific tile position (0-1 for both x and y).
+     */
+    public Crew getCrewAtTile(int tileX, int tileY) {
+        if (tileX < 0 || tileX >= 2 || tileY < 0 || tileY >= 2) {
+            return null;
+        }
+        return tiles[tileX][tileY];
+    }
+    
+    /**
+     * Set crew at specific tile position. Returns true if successful.
+     */
+    public boolean setCrewAtTile(int tileX, int tileY, Crew crew) {
+        if (tileX < 0 || tileX >= 2 || tileY < 0 || tileY >= 2) {
+            return false;
+        }
+        if (crew != null && tiles[tileX][tileY] != null) {
+            return false; // Tile already occupied
+        }
+        tiles[tileX][tileY] = crew;
+        return true;
+    }
+    
+    /**
+     * Remove crew from a tile.
+     */
+    public void removeCrewFromTile(int tileX, int tileY) {
+        if (tileX >= 0 && tileX < 2 && tileY >= 0 && tileY < 2) {
+            tiles[tileX][tileY] = null;
+        }
+    }
+    
+    /**
+     * Check if a tile is empty.
+     */
+    public boolean isTileEmpty(int tileX, int tileY) {
+        return getCrewAtTile(tileX, tileY) == null;
+    }
+    
+    /**
+     * Get number of crew in this room.
+     */
+    public int getCrewCount() {
+        int count = 0;
+        for (int x = 0; x < 2; x++) {
+            for (int y = 0; y < 2; y++) {
+                if (tiles[x][y] != null) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     public int getX() { return x; }
