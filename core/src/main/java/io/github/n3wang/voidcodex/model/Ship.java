@@ -54,7 +54,9 @@ public class Ship {
         ship.addRoom(new Room(2, 1, RoomType.OXYGEN));
         
         // Row 2: Sensors, Doors, Empty
-        ship.addRoom(new Room(0, 2, RoomType.SENSORS));
+        Room sensorsRoom = new Room(0, 2, RoomType.SENSORS);
+        sensorsRoom.setHealth(0); // Start with broken system for testing
+        ship.addRoom(sensorsRoom);
         ship.addRoom(new Room(1, 2, RoomType.DOORS));
         ship.addRoom(new Room(2, 2, RoomType.EMPTY));
         

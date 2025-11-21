@@ -48,13 +48,13 @@ That's it! I'll automatically access and analyze them.
 
 ## 🎯 Common Tasks
 
-| Task | Command | Automation Level |
-|------|---------|------------------|
-| Manual testing | Press **F12** in game | 👤 Manual |
-| Review screenshots | "Show latest screenshot" | 🤖 Automated |
-| **Auto-test feature** | **"Test energy blocks"** | 🚀 **Fully Automated** |
-| **Fix + verify** | **"Fix the bug and verify"** | 🚀 **Fully Automated** |
-| **Full QA pass** | **"Test all screens"** | 🚀 **Fully Automated** |
+| Task                  | Command                      | Automation Level      |
+| --------------------- | ---------------------------- | --------------------- |
+| Manual testing        | Press **F12** in game        | 👤 Manual              |
+| Review screenshots    | "Show latest screenshot"     | 🤖 Automated           |
+| **Auto-test feature** | **"Test energy blocks"**     | 🚀 **Fully Automated** |
+| **Fix + verify**      | **"Fix the bug and verify"** | 🚀 **Fully Automated** |
+| **Full QA pass**      | **"Test all screens"**       | 🚀 **Fully Automated** |
 
 ## 🚀 Automation Examples
 
@@ -128,16 +128,16 @@ install.bat
 
 ## 🎮 Automation Commands
 
-| What to Say | What Happens |
-|-------------|--------------|
-| "Start the game" | Game launches automatically |
-| "Restart the game" | Game restarts (useful after code changes) |
-| "Rebuild and restart" | Full rebuild + restart |
-| "Test energy blocks" | Runs automated test scenario |
-| "Test all screens" | Navigates and captures all screens |
-| "Click the shields system" | Simulates click at that location |
-| "Navigate to ship screen" | Switches to ship screen |
-| "Is the game running?" | Checks game status |
+| What to Say                | What Happens                              |
+| -------------------------- | ----------------------------------------- |
+| "Start the game"           | Game launches automatically               |
+| "Restart the game"         | Game restarts (useful after code changes) |
+| "Rebuild and restart"      | Full rebuild + restart                    |
+| "Test energy blocks"       | Runs automated test scenario              |
+| "Test all screens"         | Navigates and captures all screens        |
+| "Click the shields system" | Simulates click at that location          |
+| "Navigate to ship screen"  | Switches to ship screen                   |
+| "Is the game running?"     | Checks game status                        |
 
 ---
 

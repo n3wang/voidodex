@@ -79,6 +79,9 @@ public class ShipScreenNew extends GameScreen {
 
             // Update oxygen system
             updateOxygenSystem(scaledDelta);
+            
+            // Update repair systems
+            updateRepairSystems(scaledDelta);
         }
 
         // Always render (even when paused)
@@ -87,7 +90,7 @@ public class ShipScreenNew extends GameScreen {
         // Update UI
         updateTopBar();
 
-        // Update tile map position (in case UI moved) - only update position, not create
+        // Update tile map position (in case UI moved) - only update position, not z-order
         if (shipTileMap != null && centerPanel != null) {
             centerPanel.layout();
             // Convert centerPanel coordinates to stage coordinates
@@ -95,7 +98,7 @@ public class ShipScreenNew extends GameScreen {
             float mapX = stagePos.x + 10; // Padding from left edge of centerPanel
             float mapY = stagePos.y + 40; // Below title
             shipTileMap.setPosition(mapX, mapY);
-            shipTileMap.toFront(); // Keep it on top for input
+            // Don't call toFront() every frame - it causes z-ordering conflicts
         }
     }
 
@@ -277,20 +280,21 @@ public class ShipScreenNew extends GameScreen {
     private void createUI() {
         mainTable = new Table();
         mainTable.setFillParent(true);
+        // Minimal padding to ensure top bar has space
         mainTable.pad(5f);
         // Make sure mainTable doesn't block input to child actors
         mainTable.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.childrenOnly);
 
-        // Top Bar
+        // Top Bar - give it more space and ensure it's visible
         createTopBar();
-        mainTable.add(topBar).fillX().padBottom(5f).row();
+        mainTable.add(topBar).fillX().height(60f).padBottom(5f).row();
 
-        // Main content area
+        // Main content area - use expandY() but don't fill to allow bottom panel space
         Table contentTable = new Table();
 
         // Left Panel - Crew Portraits
         createLeftPanel();
-        contentTable.add(leftPanel).size(150f, 500f).padRight(5f);
+        contentTable.add(leftPanel).size(150f, 400f).padRight(5f);
 
         // Center Panel - Player Ship Grid
         createCenterPanel();
@@ -299,14 +303,16 @@ public class ShipScreenNew extends GameScreen {
         // Right Panel - Enemy Ship Grid (only in combat)
         createRightPanel();
         if (game.getGameState().isInCombat()) {
-            contentTable.add(rightPanel).size(300f, 500f);
+            contentTable.add(rightPanel).size(300f, 400f);
         }
 
-        mainTable.add(contentTable).expand().fill().padBottom(5f).row();
+        // Give content area explicit height to leave room for top and bottom
+        // Total: 5 (top pad) + 60 (top bar) + 5 (gap) + 400 (content) + 5 (gap) + 180 (bottom) + 5 (bottom pad) = 660f
+        mainTable.add(contentTable).expand().fill().height(400f).padBottom(5f).row();
 
         // Bottom Panel - Weapons and Systems
         createBottomPanel();
-        mainTable.add(bottomPanel).fillX();
+        mainTable.add(bottomPanel).fillX().height(180f);
 
         stage.addActor(mainTable);
         setupKeyboardInput();
@@ -318,7 +324,10 @@ public class ShipScreenNew extends GameScreen {
     private void createTopBar() {
         topBar = new Table();
         topBar.setBackground(game.getDrawable("default-round"));
-        topBar.pad(5f);
+        topBar.pad(8f);
+        // Ensure top bar has adequate height and is visible
+        topBar.setHeight(60f);
+        topBar.setVisible(true);
 
         Ship ship = game.getGameState().getCurrentShip();
 
@@ -602,15 +611,15 @@ public class ShipScreenNew extends GameScreen {
             }
 
             // Add directly to stage so it can receive input
-            // Add it on top of other actors so it receives input first
             stage.addActor(shipTileMap);
 
             // Make sure it's touchable and visible
             shipTileMap.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
             shipTileMap.setVisible(true);
-
-            // Bring to front AFTER setting touchable - this ensures it's on top
-            shipTileMap.toFront();
+            
+            // shipTileMap is added after mainTable, so it's naturally on top for input
+            // The top bar is in a different area (top of screen), so shipTileMap won't cover it
+            // shipTileMap only covers the center panel area where the ship grid is displayed
         } else {
             shipTileMap.setShip(ship);
             shipTileMap.setSelectedCrew(selectedCrew);
@@ -623,7 +632,7 @@ public class ShipScreenNew extends GameScreen {
                 float mapY = stagePos.y + 40;
                 shipTileMap.setPosition(mapX, mapY);
                 shipTileMap.setVisible(true);
-                shipTileMap.toFront();
+                // Don't call toFront() - it causes z-ordering conflicts
             }
         }
     }
@@ -1083,6 +1092,89 @@ public class ShipScreenNew extends GameScreen {
         }
 
         // Update ship grid to show oxygen changes
+        updateShipGrid();
+    }
+
+    private void updateRepairSystems(float delta) {
+        Ship ship = game.getGameState().getCurrentShip();
+
+        // Repair systems based on crew in each room
+        for (Room room : ship.getRooms()) {
+            // Debug: log room health status with percentage
+            if (room.getType() != RoomType.EMPTY && room.getHealth() < room.getMaxHealth()) {
+                float healthPercent = (float)room.getHealth() / (float)room.getMaxHealth() * 100f;
+                Gdx.app.debug("Repair", String.format("Room %s needs repair: %d/%d (%.1f%%)", 
+                    room.getType().getDisplayName(), room.getHealth(), room.getMaxHealth(), healthPercent));
+            }
+            if (room.getType() == RoomType.EMPTY) continue;
+            
+            // Check if room needs repair (health < maxHealth)
+            if (room.getHealth() < room.getMaxHealth()) {
+                // Calculate total repair rate from all crew in this room
+                float totalRepairRate = 0.0f;
+                boolean hasRepairingCrew = false;
+                List<Crew> repairingCrew = new ArrayList<>();
+                
+                for (int tileX = 0; tileX < 2; tileX++) {
+                    for (int tileY = 0; tileY < 2; tileY++) {
+                        Crew crew = room.getCrewAtTile(tileX, tileY);
+                        if (crew != null && !crew.isMoving()) {
+                            // Get repair stat (Engineering skill level)
+                            int engineeringLevel = crew.getSkillLevel(Skill.ENGINEERING);
+                            int engineeringXP = crew.getSkillXP(Skill.ENGINEERING);
+                            
+                            // Base repair rate: 20% per second for level 1, 10% for level 0
+                            // A trained Engineer (level 1 = 100 XP) repairs 0% to 100% in 5 seconds = 20% per second
+                            // Level 0 (10 XP) still repairs but slower: 10% per second = 10 seconds
+                            // Even with 0 XP, allow basic repair at 5% per second
+                            float repairRate = 0.05f; // Base repair rate for anyone
+                            if (engineeringXP > 0) {
+                                repairRate = 0.10f + (0.10f * engineeringLevel);
+                            }
+                            
+                            totalRepairRate += repairRate;
+                            hasRepairingCrew = true;
+                            repairingCrew.add(crew);
+                            
+                            // Log when crew starts repairing
+                            if (room.getHealth() < room.getMaxHealth()) {
+                                Gdx.app.log("Repair", String.format("%s in %s: Engineering Level=%d (XP=%d), Repair Rate=%.2f%%/s", 
+                                    crew.getName(), room.getType().getDisplayName(), engineeringLevel, engineeringXP, repairRate * 100f));
+                            }
+                        }
+                    }
+                }
+                
+                // Apply repair if crew is present
+                if (hasRepairingCrew && totalRepairRate > 0.0f) {
+                    int oldHealth = room.getHealth();
+                    float oldHealthPercent = (float)oldHealth / (float)room.getMaxHealth() * 100f;
+                    
+                    // Repair rate is percentage per second
+                    // Calculate repair amount in health points per second
+                    float repairAmountPerSecond = (totalRepairRate * room.getMaxHealth());
+                    float repairAmount = repairAmountPerSecond * delta;
+                    
+                    // Use fractional health accumulation to handle small increments
+                    boolean healthIncreased = room.addFractionalHealth(repairAmount);
+                    int newHealth = room.getHealth();
+                    float newHealthPercent = (float)newHealth / (float)room.getMaxHealth() * 100f;
+                    
+                    // Log repair activity with percentage (log every frame when repairing, or when health increases)
+                    if (healthIncreased || (oldHealth < room.getMaxHealth() && Math.random() < 0.1f)) {
+                        Gdx.app.log("Repair", String.format("%s: %s repairing %s - Health: %d/%d (%.1f%%) -> %d/%d (%.1f%%) [Rate: %.2f HP/s, Delta: %.3f, Amount: %.4f]", 
+                            room.getType().getDisplayName(),
+                            repairingCrew.stream().map(Crew::getName).reduce((a, b) -> a + ", " + b).orElse("Unknown"),
+                            room.getType().getDisplayName(),
+                            oldHealth, room.getMaxHealth(), oldHealthPercent,
+                            newHealth, room.getMaxHealth(), newHealthPercent,
+                            repairAmountPerSecond, delta, repairAmount));
+                    }
+                }
+            }
+        }
+        
+        // Update ship grid to show repair progress
         updateShipGrid();
     }
 

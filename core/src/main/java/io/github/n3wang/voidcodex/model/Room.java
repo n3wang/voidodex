@@ -11,6 +11,7 @@ public class Room {
     private int maxPower;
     private int health;
     private int maxHealth;
+    private float fractionalHealth; // Accumulate fractional repair amounts
     private boolean hasFire;
     private boolean hasBreach;
     private Crew assignedCrew;
@@ -30,6 +31,7 @@ public class Room {
         this.powerLevel = 0;
         this.maxHealth = type.getDefaultHealth();
         this.health = maxHealth;
+        this.fractionalHealth = 0.0f;
         this.hasFire = false;
         this.hasBreach = false;
         this.tiles = new Crew[2][2]; // 2x2 grid of tiles
@@ -125,7 +127,31 @@ public class Room {
     public void setPowerLevel(int level) { this.powerLevel = Math.max(0, Math.min(level, maxPower)); }
     public int getMaxPower() { return maxPower; }
     public int getHealth() { return health; }
-    public void setHealth(int health) { this.health = Math.max(0, Math.min(health, maxHealth)); }
+    public void setHealth(int health) { 
+        this.health = Math.max(0, Math.min(health, maxHealth));
+        // Reset fractional health when manually setting health
+        if (health >= maxHealth) {
+            this.fractionalHealth = 0.0f;
+        }
+    }
+    
+    /**
+     * Add fractional health (for repair accumulation).
+     * Returns true if health actually increased.
+     */
+    public boolean addFractionalHealth(float amount) {
+        fractionalHealth += amount;
+        if (fractionalHealth >= 1.0f) {
+            int healthIncrease = (int)fractionalHealth;
+            fractionalHealth -= healthIncrease;
+            int oldHealth = health;
+            health = Math.min(maxHealth, health + healthIncrease);
+            return health > oldHealth;
+        }
+        return false;
+    }
+    
+    public float getFractionalHealth() { return fractionalHealth; }
     public int getMaxHealth() { return maxHealth; }
     public boolean hasFire() { return hasFire; }
     public void setFire(boolean fire) { this.hasFire = fire; }

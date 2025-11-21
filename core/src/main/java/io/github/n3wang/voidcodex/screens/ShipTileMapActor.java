@@ -155,20 +155,16 @@ public class ShipTileMapActor extends Actor {
     
     private void drawRoom(Batch batch, Room room, float x, float y, float alpha) {
         // Draw room background FIRST (so tiles appear on top)
+        // Background color now only reflects oxygen level, not health
         Texture roomTexture = PixelArtGenerator.generateRoomSprite(room.getType());
         TextureRegion roomRegion = new TextureRegion(roomTexture);
         
-        // Room background (full tile size) - ensure it's visible
-        Color roomColor = Color.WHITE;
-        if (room.getHealth() < room.getMaxHealth() * 0.5f) {
-            roomColor = new Color(1f, 0.5f, 0.5f, 1f); // Light red for damaged
-        }
-        
-        batch.setColor(roomColor.r, roomColor.g, roomColor.b, alpha);
+        // Room background (full tile size) - neutral color, oxygen affects tiles only
+        batch.setColor(Color.WHITE.r, Color.WHITE.g, Color.WHITE.b, alpha * 0.3f);
         batch.draw(roomRegion, x, y, tileSize, tileSize);
         
         // Draw room border/outline
-        batch.setColor(0.4f, 0.4f, 0.4f, alpha);
+        batch.setColor(0.4f, 0.4f, 0.4f, alpha * 0.5f);
         drawRectOutline(batch, x, y, tileSize, tileSize);
         
         // Draw 2x2 tile grid within room
@@ -183,19 +179,23 @@ public class ShipTileMapActor extends Actor {
                 // Y=0 is at bottom, so render normally
                 float tileYPos = tileStartY + (tileY * roomTileSize);
                 
-                // Draw tile background based on oxygen level
+                // Draw tile background based ONLY on oxygen level (no fixed colors)
                 float oxygenLevel = room.getTileOxygen(tileX, tileY);
                 Texture tileBgTexture = PixelArtGenerator.generateRoomSprite(RoomType.EMPTY);
                 
-                // Color based on oxygen: white/grey when full (1.0), red when empty (0.0)
-                if (oxygenLevel > 0.5f) {
-                    // Full/high oxygen - white/greyish
-                    float grey = 0.7f + (oxygenLevel - 0.5f) * 0.6f; // 0.7 to 1.0
-                    batch.setColor(grey, grey, grey, alpha * 0.8f);
+                // Color based on oxygen: white/grey when full (1.0), blue tint when low, dark/black when no O2
+                if (oxygenLevel > 0.7f) {
+                    // Full oxygen - neutral white/greyish
+                    float grey = 0.8f + (oxygenLevel - 0.7f) * 0.2f; // 0.8 to 1.0
+                    batch.setColor(grey, grey, grey, alpha * 0.2f);
+                } else if (oxygenLevel > 0.3f) {
+                    // Low oxygen - blue tint
+                    float blue = 0.5f + (oxygenLevel - 0.3f) * 1.25f; // 0.5 to 1.0
+                    batch.setColor(0.3f, 0.5f, blue, alpha * 0.3f);
                 } else {
-                    // Low/no oxygen - red
-                    float red = 0.5f + oxygenLevel; // 0.5 to 1.0
-                    batch.setColor(red, 0.2f, 0.2f, alpha * 0.8f);
+                    // No oxygen - dark/black tint
+                    float darkness = oxygenLevel / 0.3f; // 0.0 to 1.0
+                    batch.setColor(0.1f * darkness, 0.1f * darkness, 0.15f * darkness, alpha * 0.5f);
                 }
                 batch.draw(tileBgTexture, tileXPos, tileYPos, roomTileSize, roomTileSize);
                 
@@ -211,6 +211,82 @@ public class ShipTileMapActor extends Actor {
             }
         }
         
+        // Draw system icon with health-based color
+        float healthPercent = (float)room.getHealth() / (float)room.getMaxHealth();
+        Texture systemIcon = PixelArtGenerator.generateSystemIcon(room.getType());
+        
+        // Log Sensors room specifically for debugging
+        if (room.getType() == RoomType.SENSORS && Math.random() < 0.1f) {
+            com.badlogic.gdx.Gdx.app.log("Repair", String.format("SENSORS DRAW: Health=%d/%d (%.1f%%)", 
+                room.getHealth(), room.getMaxHealth(), healthPercent * 100f));
+        }
+        
+        // Color based on health: Red (0%), Yellow (1-99%), White/Grey (100%)
+        Color iconColor;
+        if (healthPercent <= 0.0f) {
+            // Fully broken - red
+            iconColor = new Color(1f, 0.2f, 0.2f, 1f);
+        } else if (healthPercent >= 0.99f) {
+            // Fully repaired (>=99%) - white/grey (use >= to handle floating point precision)
+            iconColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+        } else {
+            // Partially repaired - yellow (interpolate from red to yellow)
+            // At 0%: red (1, 0.2, 0.2)
+            // At 99%: yellow (1, 1, 0.2)
+            float yellowAmount = healthPercent; // 0.0 to 0.99
+            float red = 1f;
+            float green = 0.2f + (0.8f * yellowAmount); // 0.2 to 1.0
+            float blue = 0.2f;
+            iconColor = new Color(red, green, blue, 1f);
+        }
+        
+        // Draw system icon in center of room
+        float iconSize = 20f;
+        float iconX = x + (tileSize - iconSize) / 2;
+        float iconY = y + (tileSize - iconSize) / 2;
+        
+        // Log color state for debugging (only occasionally to avoid spam)
+        if (Math.random() < 0.05f) { // 5% chance per frame for more frequent logging
+            com.badlogic.gdx.Gdx.app.log("Repair", String.format("%s icon: Health=%d/%d (%.1f%%) -> Color RGB(%.2f, %.2f, %.2f)", 
+                room.getType().getDisplayName(), room.getHealth(), room.getMaxHealth(), healthPercent * 100f, 
+                iconColor.r, iconColor.g, iconColor.b));
+        }
+        
+        batch.setColor(iconColor.r, iconColor.g, iconColor.b, alpha);
+        batch.draw(systemIcon, iconX, iconY, iconSize, iconSize);
+        
+        // Draw repair animation if crew is repairing
+        boolean isRepairing = false;
+        for (int tileX = 0; tileX < 2; tileX++) {
+            for (int tileY = 0; tileY < 2; tileY++) {
+                Crew crew = room.getCrewAtTile(tileX, tileY);
+                if (crew != null && !crew.isMoving() && room.getHealth() < room.getMaxHealth()) {
+                    // Any crew member can repair (Engineering skill just makes it faster)
+                    isRepairing = true;
+                    break;
+                }
+            }
+            if (isRepairing) break;
+        }
+        
+        if (isRepairing) {
+            // Draw repair animation - simple spark effect
+            // Use a pulsing effect based on time
+            float time = System.currentTimeMillis() / 1000f;
+            float sparkAlpha = (float)(0.5f + 0.5f * Math.sin(time * 10f)); // Pulsing
+            batch.setColor(1f, 1f, 0.3f, alpha * sparkAlpha); // Yellow sparks
+            
+            // Draw small spark particles around the icon
+            float sparkSize = 3f;
+            for (int i = 0; i < 4; i++) {
+                float angle = (float)(time * 2f + i * Math.PI / 2);
+                float sparkX = iconX + iconSize / 2 + (float)Math.cos(angle) * 8f - sparkSize / 2;
+                float sparkY = iconY + iconSize / 2 + (float)Math.sin(angle) * 8f - sparkSize / 2;
+                Texture sparkTexture = PixelArtGenerator.generateRoomSprite(RoomType.EMPTY);
+                batch.draw(sparkTexture, sparkX, sparkY, sparkSize, sparkSize);
+            }
+        }
+        
         // Draw room hazards (fire, breach) as overlay
         if (room.hasFire()) {
             Texture fireTexture = PixelArtGenerator.generateFireSprite();
@@ -222,10 +298,6 @@ public class ShipTileMapActor extends Actor {
             batch.setColor(Color.WHITE.r, Color.WHITE.g, Color.WHITE.b, alpha);
             batch.draw(breachTexture, x + 5, y + tileSize - 20, 20, 20);
         }
-        
-        // Draw room info (power, health) as text overlay
-        // Note: For text, you'd need a BitmapFont - for now, we'll skip it
-        // or use a label actor overlay
     }
     
     private void drawCrew(Batch batch, Crew crew, float x, float y, float size, float alpha) {
@@ -233,8 +305,28 @@ public class ShipTileMapActor extends Actor {
         int crewIndex = ship.getCrew().indexOf(crew);
         Texture crewTexture = PixelArtGenerator.generateCrewSprite(crewIndex);
         
-        // Always draw crew sprite in white - selection is shown by highlight border
-        batch.setColor(Color.WHITE.r, Color.WHITE.g, Color.WHITE.b, alpha);
+        // Check if crew is repairing (any crew in a damaged room can repair)
+        boolean isRepairing = false;
+        if (!crew.isMoving()) {
+            Room crewRoom = ship.getRoom(crew.getCurrentRoomX(), crew.getCurrentRoomY());
+            if (crewRoom != null && crewRoom.getHealth() < crewRoom.getMaxHealth() && crewRoom.getType() != RoomType.EMPTY) {
+                // Any crew member can repair, but Engineering skill makes it faster
+                isRepairing = true;
+            }
+        }
+        
+        // Flash yellow when repairing, otherwise white
+        Color crewColor;
+        if (isRepairing) {
+            // Flash yellow - use time-based pulsing
+            float time = System.currentTimeMillis() / 1000f;
+            float flash = (float)(0.5f + 0.5f * Math.sin(time * 8f)); // Flash 4 times per second
+            crewColor = new Color(1f, 1f, 0.2f + (0.8f * flash), 1f); // Yellow with pulsing brightness
+        } else {
+            crewColor = Color.WHITE;
+        }
+        
+        batch.setColor(crewColor.r, crewColor.g, crewColor.b, alpha);
         batch.draw(crewTexture, x + 2, y + 2, size - 4, size - 4);
         
         // Draw selection highlight - use semi-transparent yellow
