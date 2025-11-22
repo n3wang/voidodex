@@ -216,10 +216,10 @@ public class ShipTileMapActor extends Actor {
         Texture systemIcon = PixelArtGenerator.generateSystemIcon(room.getType());
         
         // Log Sensors room specifically for debugging
-        if (room.getType() == RoomType.SENSORS && Math.random() < 0.1f) {
-            com.badlogic.gdx.Gdx.app.log("Repair", String.format("SENSORS DRAW: Health=%d/%d (%.1f%%)", 
-                room.getHealth(), room.getMaxHealth(), healthPercent * 100f));
-        }
+        // if (room.getType() == RoomType.SENSORS && Math.random() < 0.1f) {
+        //     com.badlogic.gdx.Gdx.app.log("Repair", String.format("SENSORS DRAW: Health=%d/%d (%.1f%%)", 
+        //         room.getHealth(), room.getMaxHealth(), healthPercent * 100f));
+        // }
         
         // Color based on health: Red (0%), Yellow (1-99%), White/Grey (100%)
         Color iconColor;
@@ -246,11 +246,11 @@ public class ShipTileMapActor extends Actor {
         float iconY = y + (tileSize - iconSize) / 2;
         
         // Log color state for debugging (only occasionally to avoid spam)
-        if (Math.random() < 0.05f) { // 5% chance per frame for more frequent logging
-            com.badlogic.gdx.Gdx.app.log("Repair", String.format("%s icon: Health=%d/%d (%.1f%%) -> Color RGB(%.2f, %.2f, %.2f)", 
-                room.getType().getDisplayName(), room.getHealth(), room.getMaxHealth(), healthPercent * 100f, 
-                iconColor.r, iconColor.g, iconColor.b));
-        }
+        // if (Math.random() < 0.05f) { // 5% chance per frame for more frequent logging
+        //     com.badlogic.gdx.Gdx.app.log("Repair", String.format("%s icon: Health=%d/%d (%.1f%%) -> Color RGB(%.2f, %.2f, %.2f)", 
+        //         room.getType().getDisplayName(), room.getHealth(), room.getMaxHealth(), healthPercent * 100f, 
+        //         iconColor.r, iconColor.g, iconColor.b));
+        // }
         
         batch.setColor(iconColor.r, iconColor.g, iconColor.b, alpha);
         batch.draw(systemIcon, iconX, iconY, iconSize, iconSize);

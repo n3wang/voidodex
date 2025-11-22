@@ -1100,12 +1100,6 @@ public class ShipScreenNew extends GameScreen {
 
         // Repair systems based on crew in each room
         for (Room room : ship.getRooms()) {
-            // Debug: log room health status with percentage
-            if (room.getType() != RoomType.EMPTY && room.getHealth() < room.getMaxHealth()) {
-                float healthPercent = (float)room.getHealth() / (float)room.getMaxHealth() * 100f;
-                Gdx.app.debug("Repair", String.format("Room %s needs repair: %d/%d (%.1f%%)", 
-                    room.getType().getDisplayName(), room.getHealth(), room.getMaxHealth(), healthPercent));
-            }
             if (room.getType() == RoomType.EMPTY) continue;
             
             // Check if room needs repair (health < maxHealth)
